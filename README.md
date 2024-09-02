@@ -1,4 +1,4 @@
-TuResto
+TuResto Backend Service
 ====
 ## Requirements
 
