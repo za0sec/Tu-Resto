@@ -1,0 +1,43 @@
+# Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.env
+*.DS_Store
+
+# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Ignore the media files
+/media
+/media/*
+
+# Ignore static files (if generated locally)
+staticfiles/
+static/
+static/*
+
+# Ignore the env directory if using virtualenv
+env/
+venv/
+ENV/
+.venv/
+ENV/
+
+# Ignore IDE and editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Ignore Mac system files
+.DS_Store
+*.swp
+*.swo
