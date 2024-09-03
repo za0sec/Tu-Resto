@@ -7,7 +7,7 @@ jobs:
   test-python:
     # Install dependencies and run tests
     docker:
-      - image: python/3.11.9-slim
+      - image: python:3.11.9-slim
     steps:
       - checkout
       - python/install-packages
