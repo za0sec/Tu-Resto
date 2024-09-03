@@ -7,7 +7,7 @@ jobs:
   test-python:
     # Install dependencies and run tests
     docker:
-      - image: cimg/python:3.8-node
+      - image: python/3.11.9-slim
     steps:
       - checkout
       - python/install-packages
