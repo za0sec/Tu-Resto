@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -27,6 +27,16 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+INTERNAL_IPS = ('127.0.0.1',)
+
+ROOT_URLCONF = 'core.urls'
+
+ROOT_HOSTCONF = 'core.hosts'
+
+DEFAULT_HOST = 'api'
+
+SHELL_PLUS = "ipython"
+
 
 # Application definition
 
@@ -42,8 +52,7 @@ INSTALLED_APPS = [
     'apps.users',
     'apps.restaurant',
     'apps.api',
-    'rest_framework',
-
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -54,9 +63,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_hosts.middleware.HostsRequestMiddleware',
+    'django_hosts.middleware.HostsResponseMiddleware',
 ]
-
-ROOT_URLCONF = 'core.urls'
 
 TEMPLATES = [
     {

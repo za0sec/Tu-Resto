@@ -2,13 +2,6 @@ from django.db import models
 
 # aca van a ir todos los relacionados con PERSONAS
 
-# user
-# -employee
-# --waiter
-# --cashier
-# --kitchen
-#
-
 
 class User(models.Model):
     """ Physical person """
