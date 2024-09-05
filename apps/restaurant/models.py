@@ -23,6 +23,14 @@ class Branch(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['name', 'address'], name='unique_branch')
+        ]
+
+    def __str__(self):
+        return f"{self.name} at {self.address}"
+
 
 class Table(models.Model):
     number = models.IntegerField()

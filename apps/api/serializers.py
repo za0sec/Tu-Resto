@@ -1,18 +1,43 @@
 from rest_framework import serializers
-from apps.users.models import User
-from apps.restaurant.models import Restaurant
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+from apps.users.models import User, Person
+from apps.restaurant.models import Restaurant,Table,Branch
 
 
 class RestaurantSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Restaurant
-        fields = ('name', 'website')
+        fields = ('id', 'name', 'website')
 
 
-# class UserSerializer(serializers.ModelSerializer):
-#     phone = serializers.CharField(default="")
-#
-#     class Meta:
-#         model = User
-#         fields = ('name', 'last_name', 'email', 'password', 'phone')
+class TableSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Table
+        fields = ('number', 'capacity', 'branch', )
+
+
+class BranchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Branch
+        fields = ('id','name', 'address', 'phone', 'restaurant')
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        try:
+            person = Person.objects.get(user=user)
+            token['first_name'] = person.user.first_name
+            token['last_name'] = person.user.last_name
+            token['email'] = person.user.email
+            token['phone'] = person.phone
+        except Person.DoesNotExist:
+            token['first_name'] = user.first_name
+            token['last_name'] = user.last_name
+            token['email'] = user.email
+
+        return token
+
