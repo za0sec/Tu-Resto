@@ -27,6 +27,6 @@ workflows:
   build-and-test:
     jobs:
       - test-python
-    # - deploy:
-    #     requires:
-    #       - test-python
+#     - deploy:
+#         requires:
+#           - test-python
