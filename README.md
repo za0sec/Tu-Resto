@@ -1,31 +1,28 @@
 TuResto Backend Service
-====
+=======================
+
 ## Requirements
 
 * Python 3.10.4+
 * PostgreSQL: [macOS](http://exponential.io/blog/2015/02/21/install-postgresql-on-mac-os-x-via-brew/), [Ubuntu](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-14-04)
 
-
 ## Installation
 
-### Local environment
+#### Initialize your Virtual Environment
 
-Get the source code from Github.
+    python3.10 -m venv .venv --prompt$(basename $(pwd))
 
-```
-git clone git@github.com:za0sec/Tu-Resto.git
-cd Tu-Resto
-```
+#### Activate the Virtual Environment
 
-Create a Python virtual env and install the required dependencies:
+    source .venv/bin/activate
 
-```
-python3 -m venv env
-source env/bin/activate
-pip install -r requirements.txt -r dev-requirements.txt
-```
+#### Initialize app requirements (once the Virtual Environment is active)
 
-Create a `.env` file to add some basic settings. You can copy the `.env.sample` file from the repo. Make sure you update your database parameters.
+    python -m pip install --upgrade pip
+    pip install --upgrade setuptools wheel
+    pip install -r requirements.txt
+
+### Running the projects on localhost
 
 If you have a user for the server, generate a fresh snapshot of the database and follow the instructions in the command output to load it.
 
