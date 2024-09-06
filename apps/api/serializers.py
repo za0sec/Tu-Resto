@@ -1,9 +1,10 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from apps.orders.models import Order
 from apps.users.models import User, Person
 from apps.restaurant.models import Restaurant,Table,Branch
-
+from apps.products.models import Item
 
 class RestaurantSerializer(serializers.ModelSerializer):
     class Meta:
@@ -21,6 +22,12 @@ class BranchSerializer(serializers.ModelSerializer):
     class Meta:
         model = Branch
         fields = ('id','name', 'address', 'phone', 'restaurant')
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Item
+        fields = ('id','name', 'description', 'price')
+
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):

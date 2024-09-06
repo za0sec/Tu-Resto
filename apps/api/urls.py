@@ -26,6 +26,10 @@ urlpatterns = [
     path("branch/create", BranchCreate.as_view(), name="branch_create"),
     path("branch/<int:pk>", BranchDetailView.as_view(), name="branch-detail-view"),
 
+    # Products
+    path("products/", Products.as_view(), name="product_list"),
+    path('product/<int:pk>', ProductDetailView.as_view(), name='product-detail'),
+    path("product/create", ProductCreate.as_view(), name="product_create"),
 
     # Users
     # path("users/", MyInformation.as_view(), name="api_my_information"),

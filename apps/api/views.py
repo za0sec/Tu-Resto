@@ -8,9 +8,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .permissions import AllowAny
-from .serializers import RestaurantSerializer,BranchSerializer
+from .serializers import RestaurantSerializer, BranchSerializer, ProductSerializer
 
 from apps.restaurant.models import Restaurant,Branch
+from apps.products.models import Item
 from ..users.models import Person
 
 ############    Restaurant      ##############
@@ -63,6 +64,22 @@ class Branches(generics.ListAPIView):
         # Filtrar las branches que pertenecen a ese restaurante
         return Branch.objects.filter(restaurant_id=restaurant_id)
 
+####### Product #############
+
+class Products(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = ProductSerializer
+    queryset = Item.objects.all()
+
+class ProductCreate(generics.CreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = ProductSerializer
+    queryset = Item.objects.all()
+
+class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [AllowAny]
+    queryset = Item.objects.all()
+    serializer_class = ProductSerializer
 
 
 # class MyInformation(APIView):
