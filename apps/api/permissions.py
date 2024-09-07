@@ -3,6 +3,14 @@ from rest_framework.permissions import BasePermission, IsAuthenticated
 from apps.users.models import Waiter, Cashier, Manager, Admin
 
 
+class AllowAny(BasePermission):
+    """ Allow any permission class"""
+    message = 'Not allowed'
+
+    def has_permission(self, request, view):
+        return True
+
+
 class IsWaiter(BasePermission):
     """ Waiter permission class"""
     message = 'Not a Waiter'

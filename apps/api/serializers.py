@@ -5,44 +5,37 @@ from apps.orders.models import Order
 from apps.users.models import User, Person, Manager, Waiter, Employee, Kitchen
 from apps.restaurant.models import Restaurant, Table, Branch
 from apps.products.models import Item
+from apps.subscription.models import Plan
 
+# Subscription
 
-class EmployeeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Employee
-        fields = ['id', 'user', 'phone', 'started_at']
-
-
-class RestaurantSerializer(serializers.ModelSerializer):
-    employees = EmployeeSerializer(many=True, read_only=True)
+class PlanSerializer(serializers.ModelSerializer):
+    features = serializers.SerializerMethodField()
 
     class Meta:
-        model = Restaurant
-        fields = ('id', 'name', 'website', 'employees')
+        model = Plan
+        fields = '__all__'
+
+    def get_features(self, obj):
+        features = obj.features.all()
+        return [feature.name for feature in features]
+    
 
 
-class TableSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Table
-        fields = ('number', 'capacity', 'branch', )
-
-
-class BranchSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Branch
-        fields = ('id', 'name', 'address', 'phone', 'restaurant')
-
-
-class ProductSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Item
-        fields = ('id','name', 'description', 'price')
-
+# USERS
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username', 'password', 'first_name', 'last_name', 'email']
+
+
+class EmployeeSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        model = Employee
+        fields = ['id', 'user', 'phone', 'started_at']
 
 
 class ManagerSerializer(serializers.ModelSerializer):
@@ -86,6 +79,39 @@ class KitchenSerializer(serializers.ModelSerializer):
         kitchen = Kitchen.objects.create(user=user, **validated_data)
         return kitchen
 
+
+# RESTAURANT
+
+class RestaurantSerializer(serializers.ModelSerializer):
+    employees = EmployeeSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Restaurant
+        fields = ('id', 'name', 'website', 'employees', 'banner')
+
+
+# TABLES
+class TableSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Table
+        fields = ('number', 'capacity', 'branch' )
+
+
+class BranchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Branch
+        fields = ('id', 'name', 'address', 'phone', 'restaurant')
+
+#ORDERS 
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Item
+        fields = ('id','name', 'description', 'price')
+
+
+
+# TOKENS
 
 class TuRestoTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod

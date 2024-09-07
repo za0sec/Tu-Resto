@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-xpnl32d@21!lfj76+sf97g48)q#vw1^$09p1l=favrrmg602%k
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 INTERNAL_IPS = ('127.0.0.1',)
 
@@ -37,7 +37,9 @@ DEFAULT_HOST = 'api'
 
 SHELL_PLUS = "ipython"
 
+MEDIA_URL = '/media/'
 
+MEDIA_ROOT = os.path.join('http://api.localhost:8000', 'media')
 # Application definition
 
 INSTALLED_APPS = [
@@ -51,6 +53,7 @@ INSTALLED_APPS = [
     'apps.orders',
     'apps.users',
     'apps.restaurant',
+    'apps.subscription',
     'apps.api',
     'django_extensions',
     'rest_framework',
@@ -78,6 +81,7 @@ SPECTACULAR_SETTINGS = {
 }
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -87,12 +91,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_hosts.middleware.HostsRequestMiddleware',
     'django_hosts.middleware.HostsResponseMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-]
+CORS_ALLOW_ALL_ORIGINS = True
 
 TEMPLATES = [
     {

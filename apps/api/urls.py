@@ -10,12 +10,15 @@ urlpatterns = [
     path('schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
+    # Subscription
+    path("plans/", Plans.as_view(), name="plans"),
+
     # Auth
     path("auth/login", PersonTokenObtainPairView.as_view(), name="api_login"),
     path("auth/refresh", TokenRefreshView.as_view(), name="api_refresh_token"),
 
     # Restaurants
-    path("restaurants/", Restaurants.as_view(), name="restaurant_list"),
+    path("restaurants", Restaurants.as_view(), name="restaurant_list"),
     path('restaurant/<int:pk>', RestaurantDetailView.as_view(), name='restaurant-detail'),
     path("restaurant/create", RestaurantCreate.as_view(), name="restaurant_create"),
     path('restaurant/<int:restaurant_id>/branches', Branches.as_view(), name='restaurant-branches'),
@@ -29,7 +32,8 @@ urlpatterns = [
     path('product/<int:pk>', ProductDetailView.as_view(), name='product-detail'),
     path("product/create", ProductCreate.as_view(), name="product_create"),
 
-    # Users
+    # Total Employees
+    path("employees", Employees.as_view(), name="employees_list"),
 
     # Manager
     path("users/manager/create", ManagerCreate.as_view(), name="manager_create"),

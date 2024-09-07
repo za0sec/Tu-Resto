@@ -8,6 +8,7 @@ class Restaurant(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     website = models.URLField()
+    banner = models.ImageField(upload_to='restaurants/banners/', null=True, blank=True)
 
     def __str__(self):
         return self.name
