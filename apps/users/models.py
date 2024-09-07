@@ -19,8 +19,8 @@ class Person(models.Model):
 class Employee(Person):
     """ Restaurant person """
     started_at = models.DateTimeField(auto_now_add=True)
-    ended_at = models.DateTimeField(auto_now=True)
-    restaurant = models.ForeignKey('restaurant.Restaurant', on_delete=models.CASCADE)
+    ended_at = models.DateTimeField(null=True, blank=True)
+    restaurant = models.ForeignKey('restaurant.Restaurant', on_delete=models.CASCADE, related_name='employees')
 
     objects = InheritanceManager()
 

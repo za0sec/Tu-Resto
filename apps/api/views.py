@@ -7,19 +7,24 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .permissions import AllowAny
-from .serializers import RestaurantSerializer, BranchSerializer, ProductSerializer
+from .permissions import IsWaiter, IsManager, IsAdmin
+from .serializers import RestaurantSerializer, BranchSerializer, ProductSerializer, ManagerSerializer, WaiterSerializer, \
+    KitchenSerializer
 
 from apps.restaurant.models import Restaurant,Branch
 from apps.products.models import Item
-from ..users.models import Person
+from ..users.models import Person, Manager, Waiter, Kitchen
 
-############    Restaurant      ##############
+
+# Restaurant
 # ListAPIView already generates the response. No need to define a get method.
+
+
 class Restaurants(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = RestaurantSerializer
     queryset = Restaurant.objects.all()
+
 
 # C Create
 class RestaurantCreate(generics.CreateAPIView):
@@ -35,7 +40,7 @@ class RestaurantDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = RestaurantSerializer
 
 
-#############    Branches     ################
+# Branches
 class BranchCreate(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     queryset = Branch.objects.all()
@@ -64,30 +69,40 @@ class Branches(generics.ListAPIView):
         # Filtrar las branches que pertenecen a ese restaurante
         return Branch.objects.filter(restaurant_id=restaurant_id)
 
-####### Product #############
+# Product
+
 
 class Products(generics.ListAPIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     serializer_class = ProductSerializer
     queryset = Item.objects.all()
+
 
 class ProductCreate(generics.CreateAPIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     serializer_class = ProductSerializer
     queryset = Item.objects.all()
+
 
 class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     queryset = Item.objects.all()
     serializer_class = ProductSerializer
 
 
-# class MyInformation(APIView):
-#     permission_classes = [IsAuthenticated]
-#     serializer_class = UserSerializer
-#
-#     def get(self, request):
-#         user = request.user
-#         person = Person.objects.get(user=user)
-#         return Response({"first_name": person.first_name, "email": user.email})
-#
+class ManagerCreate(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = Manager.objects.all()
+    serializer_class = ManagerSerializer
+
+
+class WaiterCreate(generics.CreateAPIView):
+    permission_classes = [IsManager, IsAdmin]
+    queryset = Waiter.objects.all()
+    serializer_class = WaiterSerializer
+
+
+class KitchenCreate(generics.CreateAPIView):
+    permission_classes = [IsManager, IsAdmin]
+    queryset = Kitchen.objects.all()
+    serializer_class = KitchenSerializer

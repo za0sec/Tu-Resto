@@ -2,12 +2,12 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import status
 
-from apps.api.serializers import CustomTokenObtainPairSerializer
+from apps.api.serializers import TuRestoTokenObtainPairSerializer
 from apps.users.models import Person
 
 
 class PersonTokenObtainPairView(TokenObtainPairView):
-    serializer_class = CustomTokenObtainPairSerializer
+    serializer_class = TuRestoTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)

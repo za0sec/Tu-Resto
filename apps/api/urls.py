@@ -5,7 +5,6 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from .views import *
 from .authenticator import *
 
-
 urlpatterns = [
 
     path('schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
@@ -21,7 +20,6 @@ urlpatterns = [
     path("restaurant/create", RestaurantCreate.as_view(), name="restaurant_create"),
     path('restaurant/<int:restaurant_id>/branches', Branches.as_view(), name='restaurant-branches'),
 
-
     # Branches
     path("branch/create", BranchCreate.as_view(), name="branch_create"),
     path("branch/<int:pk>", BranchDetailView.as_view(), name="branch-detail-view"),
@@ -32,5 +30,8 @@ urlpatterns = [
     path("product/create", ProductCreate.as_view(), name="product_create"),
 
     # Users
-    # path("users/", MyInformation.as_view(), name="api_my_information"),
+
+    # Manager
+    path("users/manager/create", ManagerCreate.as_view(), name="manager_create"),
+    path("users/waiter/create", WaiterCreate.as_view(), name="waiter_create"),
 ]

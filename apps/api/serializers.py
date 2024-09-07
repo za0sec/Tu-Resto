@@ -2,15 +2,23 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from apps.orders.models import Order
-from apps.users.models import User, Person
+from apps.users.models import User, Person, Manager, Waiter, Employee, Kitchen
 from apps.restaurant.models import Restaurant, Table, Branch
 from apps.products.models import Item
 
 
+class EmployeeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Employee
+        fields = ['id', 'user', 'phone', 'started_at']
+
+
 class RestaurantSerializer(serializers.ModelSerializer):
+    employees = EmployeeSerializer(many=True, read_only=True)
+
     class Meta:
         model = Restaurant
-        fields = ('id', 'name', 'website')
+        fields = ('id', 'name', 'website', 'employees')
 
 
 class TableSerializer(serializers.ModelSerializer):
@@ -31,11 +39,58 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ('id','name', 'description', 'price')
 
 
-class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'password', 'first_name', 'last_name', 'email']
+
+
+class ManagerSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        model = Manager
+        fields = ['user', 'phone', 'restaurant']
+
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        user = User.objects.create_user(**user_data)
+        manager = Manager.objects.create(user=user, **validated_data)
+        return manager
+
+
+class WaiterSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        model = Waiter
+        fields = ['user', 'phone', 'restaurant']
+
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        user = User.objects.create_user(**user_data)
+        waiter = Waiter.objects.create(user=user, **validated_data)
+        return waiter
+
+
+class KitchenSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        model = Kitchen
+        fields = ['user', 'phone', 'restaurant']
+
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        user = User.objects.create_user(**user_data)
+        kitchen = Kitchen.objects.create(user=user, **validated_data)
+        return kitchen
+
+
+class TuRestoTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
-
         try:
             person = Person.objects.select_subclasses().get(user=user)
 
