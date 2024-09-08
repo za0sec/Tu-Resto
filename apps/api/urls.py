@@ -1,6 +1,7 @@
 from django.urls import path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 from rest_framework_simplejwt.views import TokenRefreshView
+from django.contrib.auth import views as auth_views
 
 from .views import *
 from .authenticator import *
@@ -21,6 +22,7 @@ urlpatterns = [
     path("restaurants", Restaurants.as_view(), name="restaurant_list"),
     path('restaurant/<int:pk>', RestaurantDetailView.as_view(), name='restaurant-detail'),
     path("restaurant/create", RestaurantCreate.as_view(), name="restaurant_create"),
+    path("restaurant/<int:pk>/manager", RestaurantManager.as_view(), name="restaurant-manager"),
     path('restaurant/<int:restaurant_id>/branches', Branches.as_view(), name='restaurant-branches'),
 
     # Branches
@@ -37,5 +39,11 @@ urlpatterns = [
 
     # Manager
     path("users/manager/create", ManagerCreate.as_view(), name="manager_create"),
+    path("users/manager/<int:pk>", ManagerDetailView.as_view(), name="manager_detail"),
     path("users/waiter/create", WaiterCreate.as_view(), name="waiter_create"),
+    path('reset-password/', ResetPasswordConfirmView.as_view(), name='reset_password_confirm'),
+    
+    # Orders
+    path("order/<int:pk>", TakeAwayOrderDetailView.as_view(), name="takeawayorder-detail"),
+
 ]

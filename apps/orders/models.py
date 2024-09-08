@@ -46,6 +46,7 @@ class TakeAwayOrder(Order):
     """ Take Away Order """
     phone_number = models.CharField(max_length=50, null=True, blank=True)
     cashier = models.ForeignKey('users.Cashier', on_delete=models.CASCADE)
+    ready = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Take Away Order {self.id}"

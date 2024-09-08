@@ -13,7 +13,8 @@ import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+PROJECT_ROOT = os.path.join(BASE_DIR, 'core')
 
 
 # Quick-start development settings - unsuitable for production
@@ -33,14 +34,27 @@ ROOT_URLCONF = 'core.urls'
 
 ROOT_HOSTCONF = 'core.hosts'
 
-DEFAULT_HOST = 'api'
+#TODO   servir api default
+DEFAULT_HOST = 'wpp'
 
 SHELL_PLUS = "ipython"
 
-MEDIA_URL = '/media/'
 
-MEDIA_ROOT = os.path.join('http://api.localhost:8000', 'media')
-# Application definition
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+PAGE_URL = os.environ.get('DJANGO_PAGE_URL', 'http://localhost:8000')
+
+FRONTEND_URL = "http://localhost:3000"
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'javiperalb@gmail.com'
+EMAIL_HOST_PASSWORD = 'jpszciwwzwpxzase'
+DEFAULT_FROM_EMAIL = 'javiperalb@gmail.com'
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -77,7 +91,6 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'Your project description',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
-    # OTHER SETTINGS
 }
 
 MIDDLEWARE = [
@@ -147,6 +160,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+WHATSAPP = [
+    {
+        'WEBHOOK_VERIFY_TOKEN':'turestoenwhatsapp',
+        'PHONE_NUMBER_ID':'407385469123223',
+        'ACCESS_TOKEN':'EAAMZADj3Tlb0BOZCqR2FDjVFkZCXc4ctpBqM1Tw9duKAjCJ6QQk0jLRPcgbx2FxG3aRqmJKuuSwBXi4oU6Mh8zZBYwS53VE7RpIxk0eD5iOGuj081HEMKeo4dqxMwHyAwC7sr40UT1JlW0CGt0CrZCXXPX4kODjbRR16kA4J0QPcPLG1OTbTc07pz2Ff7KZBoieAJyzJFHgaZBVJ2WD4MU0',
+        'RECEIVER_PHONE_NUMBER':'15556217720'
+    }
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/

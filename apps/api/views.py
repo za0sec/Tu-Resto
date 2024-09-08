@@ -1,21 +1,24 @@
 # Create your views here.
 from rest_framework import status, generics
-from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.models import User
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str
+from django.conf import settings
 
 from .permissions import IsWaiter, IsManager, IsAdmin, AllowAny
 from .serializers import RestaurantSerializer, BranchSerializer, ProductSerializer, ManagerSerializer, WaiterSerializer, \
-    KitchenSerializer, PlanSerializer, EmployeeSerializer
+    KitchenSerializer, PlanSerializer, EmployeeSerializer, TakeAwayOrderSerializer
 
 from apps.restaurant.models import Restaurant,Branch
 from apps.products.models import Item
 from ..users.models import Person, Manager, Waiter, Kitchen, Employee
 from apps.subscription.models import Plan
 
+from apps.orders.models import TakeAwayOrder
+from apps.wpp.views import notifyOrderReady
 
 # Subscription
 class Plans(generics.ListAPIView):
@@ -38,12 +41,34 @@ class RestaurantCreate(generics.CreateAPIView):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
 
+class RestaurantManager(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request, pk):
+        restaurant = Restaurant.objects.get(pk=pk)
+        manager = restaurant.restaurant_managers.first()
+        serializer = ManagerSerializer(manager)
+        return Response(serializer.data)
+
 
 # RUD Retrieve - Update - Destroy
 class RestaurantDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAdmin]
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        data = serializer.data
+        manager = instance.restaurant_managers.first()
+        if manager:
+            manager_serializer = ManagerSerializer(manager)
+            data['manager'] = manager_serializer.data
+        else:
+            data['manager'] = None
+
+        return Response(data)
 
 
 # Branches
@@ -71,19 +96,19 @@ class Branches(generics.ListAPIView):
 
 # PRODUCTS
 class Products(generics.ListAPIView):
-    permission_classes = [IsWaiter, IsManager, IsAdmin]
+    permission_classes = [IsWaiter | IsManager | IsAdmin]
     serializer_class = ProductSerializer
     queryset = Item.objects.all()
 
 
 class ProductCreate(generics.CreateAPIView):
-    permission_classes = [IsAdmin, IsManager]
+    permission_classes = [IsAdmin | IsManager]
     serializer_class = ProductSerializer
     queryset = Item.objects.all()
 
 
 class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAdmin, IsManager, IsWaiter]
+    permission_classes = [IsAdmin | IsManager | IsWaiter]
     queryset = Item.objects.all()
     serializer_class = ProductSerializer
 
@@ -94,14 +119,20 @@ class ManagerCreate(generics.CreateAPIView):
     serializer_class = ManagerSerializer
 
 
+class ManagerDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAdmin]
+    queryset = Manager.objects.all()
+    serializer_class = ManagerSerializer
+
+
 class WaiterCreate(generics.CreateAPIView):
-    permission_classes = [IsManager, IsAdmin]
+    permission_classes = [IsManager | IsAdmin]
     queryset = Waiter.objects.all()
     serializer_class = WaiterSerializer
 
 
 class KitchenCreate(generics.CreateAPIView):
-    permission_classes = [IsManager, IsAdmin]
+    permission_classes = [IsManager | IsAdmin]
     queryset = Kitchen.objects.all()
     serializer_class = KitchenSerializer
 
@@ -110,3 +141,41 @@ class Employees(generics.ListAPIView):
     permission_classes = [IsAdmin]
     serializer_class = EmployeeSerializer
     queryset = Employee.objects.all()
+
+class ResetPasswordConfirmView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        uidb64 = request.data.get('uidb64')
+        token = request.data.get('token')
+        password = request.data.get('password')
+
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+
+            # Validar el token
+            if default_token_generator.check_token(user, token):
+                user.set_password(password)
+                user.save()
+                return Response({'message': 'Contraseña actualizada correctamente'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Token inválido'}, status=status.HTTP_400_BAD_REQUEST)
+
+        except User.DoesNotExist:
+            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_400_BAD_REQUEST)
+
+# ORDERS
+class TakeAwayOrderDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [AllowAny]
+    queryset = TakeAwayOrder.objects.all()
+    serializer_class = TakeAwayOrderSerializer
+    
+    def perform_update(self, serializer):
+        # Llama a la implementación por defecto para realizar la actualización
+        serializer.save()
+        self.handle_ready_status(self.get_object())
+
+    def handle_ready_status(self, new_order):
+        if new_order.ready is True:
+            notifyOrderReady(new_order.phone_number, new_order)

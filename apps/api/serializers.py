@@ -1,11 +1,20 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
 
 from apps.orders.models import Order
 from apps.users.models import User, Person, Manager, Waiter, Employee, Kitchen
 from apps.restaurant.models import Restaurant, Table, Branch
+from apps.orders.models import Order, TakeAwayOrder, TableOrder, DeliveryOrder
 from apps.products.models import Item
-from apps.subscription.models import Plan
+from apps.subscription.models import Plan, Subscription
+from django.contrib.auth.tokens import default_token_generator
+from django.urls import reverse
+from django.core.mail import send_mail
+
+
+from django.conf import settings
 
 # Subscription
 
@@ -20,14 +29,23 @@ class PlanSerializer(serializers.ModelSerializer):
         features = obj.features.all()
         return [feature.name for feature in features]
     
+class SubscriptionSerializer(serializers.ModelSerializer):
+    plan = PlanSerializer(read_only=True)
+    
+    class Meta:
+        model = Subscription
+        fields = ['id', 'plan', 'is_active']
+
+    
 
 
 # USERS
 
 class UserSerializer(serializers.ModelSerializer):
+    
     class Meta:
         model = User
-        fields = ['username', 'password', 'first_name', 'last_name', 'email']
+        fields = ['id', 'username', 'first_name', 'last_name', 'email']
 
 
 class EmployeeSerializer(serializers.ModelSerializer):
@@ -35,7 +53,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Employee
-        fields = ['id', 'user', 'phone', 'started_at']
+        fields = ['user', 'phone', 'started_at', 'branch']
 
 
 class ManagerSerializer(serializers.ModelSerializer):
@@ -43,13 +61,28 @@ class ManagerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Manager
-        fields = ['user', 'phone', 'restaurant']
+        fields = ['user', 'phone', 'restaurant', 'branch']
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
         user = User.objects.create_user(**user_data)
         manager = Manager.objects.create(user=user, **validated_data)
+
+        token = default_token_generator.make_token(user)
+        uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+
+        reset_url = f"{settings.FRONTEND_URL}/reset-password?uidb64={uidb64}&token={token}"
+
+        self.send_password_reset_email(user.email, reset_url)
+
         return manager
+
+    def send_password_reset_email(self, email, reset_url):
+        subject = "Crea tu contraseña"
+        message = f"Por favor, haz clic en el siguiente enlace para crear tu contraseña: {reset_url}"
+        from_email = settings.DEFAULT_FROM_EMAIL
+        recipient_list = [email]
+        send_mail(subject, message, from_email, recipient_list)
 
 
 class WaiterSerializer(serializers.ModelSerializer):
@@ -79,16 +112,38 @@ class KitchenSerializer(serializers.ModelSerializer):
         kitchen = Kitchen.objects.create(user=user, **validated_data)
         return kitchen
 
-
-# RESTAURANT
+# RESTAURANTS
 
 class RestaurantSerializer(serializers.ModelSerializer):
     employees = EmployeeSerializer(many=True, read_only=True)
+    subscriptions = SubscriptionSerializer(read_only=True)
+    banner = serializers.SerializerMethodField()
+
+    def get_banner(self, obj):
+        if obj.banner:
+            return settings.PAGE_URL + obj.banner.url
+        return None
 
     class Meta:
         model = Restaurant
-        fields = ('id', 'name', 'website', 'employees', 'banner')
+        fields = ('id', 'name', 'website', 'employees', 'banner', 'subscriptions')
 
+    def create(self, validated_data):
+        banner = validated_data.pop('banner', None)
+        restaurant = Restaurant.objects.create(**validated_data)
+        if banner:
+            restaurant.banner = banner
+            restaurant.save()
+        return restaurant
+
+    def update(self, instance, validated_data):
+        banner = validated_data.pop('banner', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if banner:
+            instance.banner = banner
+        instance.save()
+        return instance
 
 # TABLES
 class TableSerializer(serializers.ModelSerializer):
@@ -133,3 +188,24 @@ class TuRestoTokenObtainPairSerializer(TokenObtainPairSerializer):
             token['role'] = 'Unknown'
 
         return token
+
+# ORDERS
+class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['id', 'created_at', 'updated_at', 'items', 'paid', 'delivered', 'delivered_at', 'payment_method']
+
+class TakeAwayOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TakeAwayOrder
+        fields = ['id', 'created_at', 'updated_at', 'items', 'paid', 'delivered', 'delivered_at', 'payment_method', 'phone_number', 'cashier', 'ready']
+
+class TableOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TableOrder
+        fields = ['id', 'created_at', 'updated_at', 'items', 'paid', 'delivered', 'delivered_at', 'payment_method', 'table']
+
+class DeliveryOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeliveryOrder
+        fields = ['id', 'created_at', 'updated_at', 'items', 'paid', 'delivered', 'delivered_at', 'payment_method', 'address', 'phone_number']

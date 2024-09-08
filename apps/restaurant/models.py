@@ -8,7 +8,7 @@ class Restaurant(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     website = models.URLField()
-    banner = models.ImageField(upload_to='restaurants/banners/', null=True, blank=True)
+    banner = models.ImageField(upload_to='media/restaurants/banners/', null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -20,7 +20,7 @@ class Branch(models.Model):
     address = models.CharField(max_length=50)
     phone = models.CharField(max_length=50)
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
-    employees = models.ForeignKey('users.Employee', null=True, on_delete=models.SET_NULL)
+    employees = models.ForeignKey('users.Employee', null=True, on_delete=models.SET_NULL, related_name='branch_all_employees')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -48,3 +48,5 @@ typing_extensions==4.12.2
 uritemplate==4.1.1
 wcwidth==0.2.13
 wrapt==1.16.0
+celery
+redis
