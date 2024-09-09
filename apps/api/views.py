@@ -10,14 +10,15 @@ from django.conf import settings
 
 from .permissions import IsWaiter, IsManager, IsAdmin, AllowAny
 from .serializers import RestaurantSerializer, BranchSerializer, ProductSerializer, ManagerSerializer, WaiterSerializer, \
-    KitchenSerializer, PlanSerializer, EmployeeSerializer, TakeAwayOrderSerializer
+    KitchenSerializer, PlanSerializer, EmployeeSerializer, TakeAwayOrderSerializer, TableOrderSerializer, DeliveryOrderSerializer, \
+    PersonSerializer, OrderSerializer, OrderItemSerializer, CategorySerializer, CategoryExtraSerializer
 
 from apps.restaurant.models import Restaurant,Branch
-from apps.products.models import Item
+from apps.products.models import Product, Category, CategoryExtra
 from ..users.models import Person, Manager, Waiter, Kitchen, Employee
 from apps.subscription.models import Plan
 
-from apps.orders.models import TakeAwayOrder
+from apps.orders.models import TakeAwayOrder, Order, TableOrder, DeliveryOrder, OrderItem
 from apps.wpp.views import notifyOrderReady
 
 # Subscription
@@ -40,6 +41,20 @@ class RestaurantCreate(generics.CreateAPIView):
     permission_classes = [IsAdmin]
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
+
+
+# User Profile
+class UserProfile(APIView):
+    permission_classes = [IsManager | IsWaiter | IsAdmin]
+    
+    def get(self, request):
+        try:
+            person = Person.objects.select_subclasses().get(user=request.user)
+            serializer = PersonSerializer(person)
+            return Response(serializer.data)
+        except Person.DoesNotExist:
+            return Response({"error": "No se encontró un perfil de persona asociado a este usuario."}, status=status.HTTP_404_NOT_FOUND)
+
 
 class RestaurantManager(APIView):
     permission_classes = [IsAdmin]
@@ -98,21 +113,57 @@ class Branches(generics.ListAPIView):
 class Products(generics.ListAPIView):
     permission_classes = [IsWaiter | IsManager | IsAdmin]
     serializer_class = ProductSerializer
-    queryset = Item.objects.all()
+    queryset = Product.objects.all()
 
 
 class ProductCreate(generics.CreateAPIView):
     permission_classes = [IsAdmin | IsManager]
     serializer_class = ProductSerializer
-    queryset = Item.objects.all()
+    queryset = Product.objects.all()
 
 
 class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAdmin | IsManager | IsWaiter]
-    queryset = Item.objects.all()
+    queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
 
+class Categories(generics.ListAPIView):
+    permission_classes = [IsWaiter | IsManager | IsAdmin]
+    serializer_class = CategorySerializer
+    queryset = Category.objects.all()
+    
+
+class CategoryCreate(generics.CreateAPIView):
+    permission_classes = [IsAdmin | IsManager]
+    serializer_class = CategorySerializer
+    queryset = Category.objects.all()
+
+class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAdmin | IsManager | IsWaiter]
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
+
+class CategoryExtraCreate(generics.CreateAPIView):
+    permission_classes = [IsAdmin | IsManager]
+    serializer_class = CategoryExtraSerializer
+    queryset = CategoryExtra.objects.all()
+
+
+class CategoryExtraDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAdmin | IsManager | IsWaiter]
+    queryset = CategoryExtra.objects.all()
+    serializer_class = CategoryExtraSerializer
+
+
+class CategoriesExtra(generics.ListAPIView):
+    permission_classes = [IsWaiter | IsManager | IsAdmin]
+    serializer_class = CategoryExtraSerializer
+    queryset = CategoryExtra.objects.all()
+        
+
+# EMPLOYEES
 class ManagerCreate(generics.CreateAPIView):
     permission_classes = [IsAdmin]
     queryset = Manager.objects.all()
@@ -166,16 +217,80 @@ class ResetPasswordConfirmView(APIView):
             return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_400_BAD_REQUEST)
 
 # ORDERS
+
+class DailyOrders(generics.ListAPIView):
+    permission_classes = [IsManager | IsAdmin]
+    serializer_class = OrderSerializer
+    queryset = Order.objects.all()
+
+    def get_queryset(self):
+        date = self.kwargs['date']
+        return Order.objects.filter(created_at__date=date)
+    
+
+class OrderCreate(generics.CreateAPIView):
+    permission_classes = [AllowAny]
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+
+
+class OrderItems(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    queryset = OrderItem.objects.all()
+    serializer_class = OrderItemSerializer
+
+
+class OrderItemCreate(generics.CreateAPIView):
+    permission_classes = [AllowAny]
+    queryset = OrderItem.objects.all()
+    serializer_class = OrderItemSerializer
+    
+    
+class OrderItemDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [AllowAny]
+    queryset = OrderItem.objects.all()
+    serializer_class = OrderItemSerializer
+
+
+class DeliveryOrderCreate(generics.CreateAPIView):
+    permission_classes = [AllowAny]
+    queryset = DeliveryOrder.objects.all()
+    serializer_class = DeliveryOrderSerializer
+
+
+class DeliveryOrderDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [AllowAny]
+    queryset = DeliveryOrder.objects.all()
+    serializer_class = DeliveryOrderSerializer
+
+
+class TableOrderCreate(generics.CreateAPIView):
+    permission_classes = [AllowAny]
+    queryset = TableOrder.objects.all()
+    serializer_class = TableOrderSerializer
+
+
+class TableOrderDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [AllowAny]
+    queryset = TableOrder.objects.all()
+    serializer_class = TableOrderSerializer
+    
+
+class TakeAwayOrderCreate(generics.CreateAPIView):
+    permission_classes = [AllowAny]
+    queryset = TakeAwayOrder.objects.all()
+    serializer_class = TakeAwayOrderSerializer
+    
+    
 class TakeAwayOrderDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [AllowAny]
     queryset = TakeAwayOrder.objects.all()
     serializer_class = TakeAwayOrderSerializer
     
     def perform_update(self, serializer):
-        # Llama a la implementación por defecto para realizar la actualización
         serializer.save()
         self.handle_ready_status(self.get_object())
 
     def handle_ready_status(self, new_order):
-        if new_order.ready is True:
+        if new_order.ready is True and new_order.phone_number is not None:
             notifyOrderReady(new_order.phone_number, new_order)

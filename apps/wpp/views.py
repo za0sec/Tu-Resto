@@ -10,11 +10,10 @@ from .serializers import WhatsappMessageSerializer
 
 
 class WhatsappReceiver(APIView):
+    ''' Autenticacion del webhook en meta '''
+   
     permission_classes = [AllowAny]
     
-    '''
-    Autenticacion del webhook en meta
-    '''
     def get(self, request):
         # Verificar el modo y el token enviados son correctos
         mode = request.GET.get('hub.mode')
@@ -28,9 +27,7 @@ class WhatsappReceiver(APIView):
             # Responder con '403 Forbidden' si los tokens de verificación no coinciden
             return Response(status=status.HTTP_403_FORBIDDEN)
         
-    '''
-    Registrar mensajes entrantes
-    '''
+    ''' Registrar mensajes entrantes '''
     def post(self, request):
         message_entries = request.data.get('entry', [])
         for entry in message_entries:

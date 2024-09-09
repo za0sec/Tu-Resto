@@ -5,21 +5,31 @@ class Order(models.Model):
     """ Customer Order """
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    items = models.ManyToManyField('products.Item', through='OrderItem')
+    items = models.ManyToManyField('products.Product', through='OrderItem')
     paid = models.BooleanField(default=False)
     delivered = models.BooleanField(default=False)
     delivered_at = models.DateTimeField(null=True, blank=True)
     payment_method = models.CharField(max_length=50, null=True, blank=True)
-
+    discount = models.DecimalField(max_digits=3, decimal_places=2, default=0)
+    commentary = models.CharField(max_length=255, null=True, blank=True)
+    
     def get_total(self):
-        return sum([item.product.price * item.quantity for item in self.order_items.all()])
+        return sum([item.get_total() for item in self.order_items.all()])
 
 
 class OrderItem(models.Model):
     """ Order Item """
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_items')
-    product = models.ForeignKey('products.Item', on_delete=models.CASCADE)
+    product = models.ForeignKey('products.Product', on_delete=models.SET_NULL, null=True)
     quantity = models.PositiveIntegerField()
+    extras = models.ManyToManyField('products.ProductExtra')
+    commentary = models.CharField(max_length=255, null=True, blank=True)
+
+    def get_total(self):
+        total = self.product.price * self.quantity
+        for extra in self.extras.all():
+            total += extra.price * self.quantity
+        return total
 
     def __str__(self):
         return f"Order {self.order.id} - {self.product.name} x {self.quantity}"

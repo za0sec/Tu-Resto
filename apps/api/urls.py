@@ -37,6 +37,8 @@ urlpatterns = [
     # Total Employees
     path("employees", Employees.as_view(), name="employees_list"),
 
+    path("user/profile", UserProfile.as_view(), name="user_profile"),
+
     # Manager
     path("users/manager/create", ManagerCreate.as_view(), name="manager_create"),
     path("users/manager/<int:pk>", ManagerDetailView.as_view(), name="manager_detail"),
@@ -44,6 +46,37 @@ urlpatterns = [
     path('reset-password/', ResetPasswordConfirmView.as_view(), name='reset_password_confirm'),
     
     # Orders
+    path("orders/daily/<str:date>", DailyOrders.as_view(), name="daily_orders"),
+    path("order/create", OrderCreate.as_view(), name="order_create"),
     path("order/<int:pk>", TakeAwayOrderDetailView.as_view(), name="takeawayorder-detail"),
+    
+    # takeawayorders
+    path("order/takeaway/create", TakeAwayOrderCreate.as_view(), name="takeaway_order_create"),
+    path("order/takeaway/<int:pk>", TakeAwayOrderDetailView.as_view(), name="takeaway_order_detail"),
 
+    # deliveryorders
+    path("order/delivery/create", DeliveryOrderCreate.as_view(), name="delivery_order_create"),
+    path("order/delivery/<int:pk>", DeliveryOrderDetailView.as_view(), name="delivery_order_detail"),
+
+    # tableorders
+    path("order/table/create", TableOrderCreate.as_view(), name="table_order_create"),
+    path("order/table/<int:pk>", TableOrderDetailView.as_view(), name="table_order_detail"),
+    
+    # OrderItem
+    path("orderitem/create", OrderItemCreate.as_view(), name="orderitem_create"),
+    path("orderitem/<int:pk>", OrderItemDetailView.as_view(), name="orderitem_detail"),
+    path("orderitems", OrderItems.as_view(), name="orderitem_list"),
+    
+    # Categorías
+    path("categories/", Categories.as_view(), name="category_list"),
+    path("category/create", CategoryCreate.as_view(), name="category_create"),
+    path("category/<int:pk>", CategoryDetailView.as_view(), name="category_detail"),
+
+    # Categorías Extra
+    path("categories-extra/", CategoriesExtra.as_view(), name="category_extra_list"),
+    path("category-extra/create", CategoryExtraCreate.as_view(), name="category_extra_create"),
+    path("category-extra/<int:pk>", CategoryExtraDetailView.as_view(), name="category_extra_detail"),
+
+    # Planes de suscripción
+    path("plans/", Plans.as_view(), name="plan_list"),
 ]

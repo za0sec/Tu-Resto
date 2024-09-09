@@ -6,8 +6,8 @@ from django.utils.encoding import force_bytes
 from apps.orders.models import Order
 from apps.users.models import User, Person, Manager, Waiter, Employee, Kitchen
 from apps.restaurant.models import Restaurant, Table, Branch
-from apps.orders.models import Order, TakeAwayOrder, TableOrder, DeliveryOrder
-from apps.products.models import Item
+from apps.orders.models import Order, TakeAwayOrder, TableOrder, DeliveryOrder, OrderItem
+from apps.products.models import Product, ProductExtra, Category, CategoryExtra
 from apps.subscription.models import Plan, Subscription
 from django.contrib.auth.tokens import default_token_generator
 from django.urls import reverse
@@ -54,35 +54,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = ['user', 'phone', 'started_at', 'branch']
-
-
-class ManagerSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
-
-    class Meta:
-        model = Manager
-        fields = ['user', 'phone', 'restaurant', 'branch']
-
-    def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        user = User.objects.create_user(**user_data)
-        manager = Manager.objects.create(user=user, **validated_data)
-
-        token = default_token_generator.make_token(user)
-        uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-
-        reset_url = f"{settings.FRONTEND_URL}/reset-password?uidb64={uidb64}&token={token}"
-
-        self.send_password_reset_email(user.email, reset_url)
-
-        return manager
-
-    def send_password_reset_email(self, email, reset_url):
-        subject = "Crea tu contraseña"
-        message = f"Por favor, haz clic en el siguiente enlace para crear tu contraseña: {reset_url}"
-        from_email = settings.DEFAULT_FROM_EMAIL
-        recipient_list = [email]
-        send_mail(subject, message, from_email, recipient_list)
 
 
 class WaiterSerializer(serializers.ModelSerializer):
@@ -144,6 +115,9 @@ class RestaurantSerializer(serializers.ModelSerializer):
             instance.banner = banner
         instance.save()
         return instance
+    
+
+
 
 # TABLES
 class TableSerializer(serializers.ModelSerializer):
@@ -157,12 +131,85 @@ class BranchSerializer(serializers.ModelSerializer):
         model = Branch
         fields = ('id', 'name', 'address', 'phone', 'restaurant')
 
-#ORDERS 
+
+class ManagerSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    restaurant = serializers.PrimaryKeyRelatedField(queryset=Restaurant.objects.all(), write_only=True)
+
+    class Meta:
+        model = Manager
+        fields = ['user', 'phone', 'restaurant', 'branch']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['restaurant'] = RestaurantSerializer(instance.restaurant).data
+        return representation
+
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        restaurant = validated_data.pop('restaurant')
+        user = User.objects.create_user(**user_data)
+        manager = Manager.objects.create(user=user, restaurant=restaurant, **validated_data)
+
+        token = default_token_generator.make_token(user)
+        uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+
+        reset_url = f"{settings.FRONTEND_URL}/reset-password?uidb64={uidb64}&token={token}"
+
+        self.send_password_reset_email(user.email, reset_url)
+
+        return manager
+
+    def send_password_reset_email(self, email, reset_url):
+        subject = "Crea tu contraseña"
+        message = f"Por favor, haz clic en el siguiente enlace para crear tu contraseña: {reset_url}"
+        from_email = settings.DEFAULT_FROM_EMAIL
+        recipient_list = [email]
+        send_mail(subject, message, from_email, recipient_list)
+
+
+# PRODUCTS
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Item
-        fields = ('id','name', 'description', 'price')
+        model = Product
+        fields = '__all__'
+
+
+class ProductExtraSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductExtra
+        fields = '__all__'
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = '__all__'
+
+
+class CategoryExtraSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CategoryExtra
+        fields = '__all__'
+
+# PERSON SERIALIZERS
+
+class PersonSerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+        person = Person.objects.select_subclasses().get(pk=instance.pk)
+        role = person.__class__.__name__
+        serializer_class = globals().get(f"{role}Serializer")
+        
+        if serializer_class:
+            return serializer_class(person).data
+        else:
+            return super().to_representation(instance)
+
+    class Meta:
+        model = Person
+        fields = '__all__'
+
 
 
 
@@ -190,22 +237,34 @@ class TuRestoTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
 # ORDERS
+
 class OrderSerializer(serializers.ModelSerializer):
+    total = serializers.SerializerMethodField()
+
+    def get_total(self, obj):
+        return obj.get_total()
+    
     class Meta:
         model = Order
-        fields = ['id', 'created_at', 'updated_at', 'items', 'paid', 'delivered', 'delivered_at', 'payment_method']
+        fields = '__all__'
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderItem
+        fields = '__all__'
+
 
 class TakeAwayOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = TakeAwayOrder
-        fields = ['id', 'created_at', 'updated_at', 'items', 'paid', 'delivered', 'delivered_at', 'payment_method', 'phone_number', 'cashier', 'ready']
+        fields = '__all__'
 
 class TableOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = TableOrder
-        fields = ['id', 'created_at', 'updated_at', 'items', 'paid', 'delivered', 'delivered_at', 'payment_method', 'table']
+        fields = '__all__'
 
 class DeliveryOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeliveryOrder
-        fields = ['id', 'created_at', 'updated_at', 'items', 'paid', 'delivered', 'delivered_at', 'payment_method', 'address', 'phone_number']
+        fields =  '__all__'

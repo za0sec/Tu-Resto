@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import os
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -35,10 +36,15 @@ ROOT_URLCONF = 'core.urls'
 ROOT_HOSTCONF = 'core.hosts'
 
 #TODO   servir api default
-DEFAULT_HOST = 'wpp'
+DEFAULT_HOST = 'api'
 
 SHELL_PLUS = "ipython"
 
+# TODO: cambiar tiempo de expiracion
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),    
+}
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

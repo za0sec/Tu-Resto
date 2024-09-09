@@ -25,6 +25,14 @@ class Employee(Person):
     objects = InheritanceManager()
 
 
+'''
+Modela a un empleado de una branch especifica. Por eso guarda branch
+'''
+class BranchStaff(Employee):
+    # branch = models.ForeignKey('restaurant.Branch', on_delete=models.CASCADE, related_name='branch_employees', null=True, blank=True)
+    pass
+
+
 class Waiter(Employee):
     pass
 
@@ -37,6 +45,10 @@ class Kitchen(Employee):
     pass
 
 
+# TODO: RENAME TO MANAGER
+'''
+Modela al administrador de un restaurant -- todas sus branches
+'''
 class Manager(Employee):
     restaurant = models.ForeignKey('restaurant.Restaurant', on_delete=models.CASCADE, related_name='restaurant_managers', null=True, blank=True)
     pass
