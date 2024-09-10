@@ -111,7 +111,7 @@ class Branches(generics.ListAPIView):
 
 # PRODUCTS
 class Products(generics.ListAPIView):
-    permission_classes = [IsWaiter | IsManager | IsAdmin]
+    permission_classes = [ IsManager | IsAdmin]
     serializer_class = ProductSerializer
     queryset = Product.objects.all()
 
@@ -228,6 +228,18 @@ class DailyOrders(generics.ListAPIView):
         return Order.objects.filter(created_at__date=date)
     
 
+class Orders(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = OrderSerializer
+    queryset = Order.objects.all()
+    
+    
+class OrderDetailView(generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = OrderSerializer
+    queryset = Order.objects.all()
+
+    
 class OrderCreate(generics.CreateAPIView):
     permission_classes = [AllowAny]
     queryset = Order.objects.all()

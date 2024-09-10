@@ -29,7 +29,6 @@ class Employee(Person):
 Modela a un empleado de una branch especifica. Por eso guarda branch
 '''
 class BranchStaff(Employee):
-    # branch = models.ForeignKey('restaurant.Branch', on_delete=models.CASCADE, related_name='branch_employees', null=True, blank=True)
     pass
 
 

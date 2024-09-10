@@ -29,14 +29,10 @@ urlpatterns = [
     path("branch/create", BranchCreate.as_view(), name="branch_create"),
     path("branch/<int:pk>", BranchDetailView.as_view(), name="branch-detail-view"),
 
-    # Products
-    path("products/", Products.as_view(), name="product_list"),
-    path('product/<int:pk>', ProductDetailView.as_view(), name='product-detail'),
-    path("product/create", ProductCreate.as_view(), name="product_create"),
-
     # Total Employees
     path("employees", Employees.as_view(), name="employees_list"),
 
+    # Staff
     path("user/profile", UserProfile.as_view(), name="user_profile"),
 
     # Manager
@@ -46,9 +42,10 @@ urlpatterns = [
     path('reset-password/', ResetPasswordConfirmView.as_view(), name='reset_password_confirm'),
     
     # Orders
+    path("orders", Orders.as_view(), name="orders"),
     path("orders/daily/<str:date>", DailyOrders.as_view(), name="daily_orders"),
     path("order/create", OrderCreate.as_view(), name="order_create"),
-    path("order/<int:pk>", TakeAwayOrderDetailView.as_view(), name="takeawayorder-detail"),
+    path("order/<int:pk>", OrderDetailView.as_view(), name="order-detail"),
     
     # takeawayorders
     path("order/takeaway/create", TakeAwayOrderCreate.as_view(), name="takeaway_order_create"),
@@ -71,6 +68,11 @@ urlpatterns = [
     path("categories/", Categories.as_view(), name="category_list"),
     path("category/create", CategoryCreate.as_view(), name="category_create"),
     path("category/<int:pk>", CategoryDetailView.as_view(), name="category_detail"),
+
+    # Products
+    path("products/", Products.as_view(), name="product_list"),
+    path('product/<int:pk>', ProductDetailView.as_view(), name='product-detail'),
+    path("product/create", ProductCreate.as_view(), name="product_create"),
 
     # Categorías Extra
     path("categories-extra/", CategoriesExtra.as_view(), name="category_extra_list"),

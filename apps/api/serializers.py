@@ -4,7 +4,7 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 
 from apps.orders.models import Order
-from apps.users.models import User, Person, Manager, Waiter, Employee, Kitchen
+from apps.users.models import User, Person, Manager, Waiter, Employee, Kitchen, BranchStaff
 from apps.restaurant.models import Restaurant, Table, Branch
 from apps.orders.models import Order, TakeAwayOrder, TableOrder, DeliveryOrder, OrderItem
 from apps.products.models import Product, ProductExtra, Category, CategoryExtra
@@ -183,9 +183,17 @@ class ProductExtraSerializer(serializers.ModelSerializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    products = ProductSerializer(many=True, read_only=True)
+    
     class Meta:
         model = Category
         fields = '__all__'
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['products'] = ProductSerializer(instance.product_set.all(), many=True).data
+        return representation
+
 
 
 class CategoryExtraSerializer(serializers.ModelSerializer):
@@ -240,29 +248,148 @@ class TuRestoTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     total = serializers.SerializerMethodField()
+    items = serializers.SerializerMethodField()
 
     def get_total(self, obj):
         return obj.get_total()
+    
+    def get_items(self, obj):
+        return OrderItemSerializer(obj.order_items.all(), many=True).data
     
     class Meta:
         model = Order
         fields = '__all__'
 
 class OrderItemSerializer(serializers.ModelSerializer):
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+    extras = serializers.PrimaryKeyRelatedField(many=True, queryset=ProductExtra.objects.all())
+
     class Meta:
         model = OrderItem
         fields = '__all__'
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['product'] = ProductSerializer(instance.product).data
+        representation['extras'] = ProductExtraSerializer(instance.extras.all(), many=True).data
+        return representation
+
 
 class TakeAwayOrderSerializer(serializers.ModelSerializer):
+    order_items = OrderItemSerializer(many=True)
+    branch_staff = serializers.PrimaryKeyRelatedField(queryset=BranchStaff.objects.all(), allow_null=True, required=False)
+
     class Meta:
         model = TakeAwayOrder
-        fields = '__all__'
+        fields = ['id', 'phone_number', 'branch_staff', 'ready', 'payment_method', 'commentary', 'order_items']
+
+    def create(self, validated_data):
+        order_items_data = validated_data.pop('order_items', None)
+
+        takeaway_order = TakeAwayOrder.objects.create(**validated_data)
+
+        if order_items_data:
+            for order_item_data in order_items_data:
+                product = order_item_data.get('product')
+                extras = order_item_data.pop('extras', [])
+                order_item = OrderItem.objects.create(
+                    order=takeaway_order,
+                    product=product,
+                    quantity=order_item_data.get('quantity'),
+                    commentary=order_item_data.get('commentary')
+                )
+                order_item.extras.set(extras)
+
+        return takeaway_order
+
+    def update(self, instance, validated_data):
+        instance.phone_number = validated_data.get('phone_number', instance.phone_number)
+        instance.branch_staff = validated_data.get('branch_staff', instance.branch_staff)
+        instance.ready = validated_data.get('ready', instance.ready)
+        instance.payment_method = validated_data.get('payment_method', instance.payment_method)
+        instance.commentary = validated_data.get('commentary', instance.commentary)
+        instance.save()
+
+        order_items_data = validated_data.pop('order_items', None)
+
+        if order_items_data is not None:
+            instance.order_items.all().delete()
+            for order_item_data in order_items_data:
+                product = order_item_data.get('product')
+                extras = order_item_data.pop('extras', [])
+                order_item = OrderItem.objects.create(
+                    order=instance,
+                    product=product,
+                    quantity=order_item_data.get('quantity'),
+                    commentary=order_item_data.get('commentary')
+                )
+                order_item.extras.set(extras)
+
+        return instance
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['branch_staff'] = BranchStaffSerializer(instance.branch_staff).data if instance.branch_staff else None
+        representation['order_items'] = OrderItemSerializer(instance.order_items.all(), many=True).data
+        return representation
+
 
 class TableOrderSerializer(serializers.ModelSerializer):
+    order_items = OrderItemSerializer(many=True)
+
     class Meta:
         model = TableOrder
-        fields = '__all__'
+        fields = ['table', 'payment_method', 'commentary', 'order_items']
+
+    def create(self, validated_data):
+        order_items_data = validated_data.pop('order_items')
+        table_order = TableOrder.objects.create(**validated_data)
+
+        for order_item_data in order_items_data:
+            product = order_item_data.get('product')
+            OrderItem.objects.create(
+                order=table_order,
+                product=product,
+                quantity=order_item_data.get('quantity'),
+                commentary=order_item_data.get('commentary'),
+                extras=order_item_data.get('extras')
+            )
+        
+        return table_order
+
+    def update(self, instance, validated_data):
+        instance.table = validated_data.get('table', instance.table)
+        instance.payment_method = validated_data.get('payment_method', instance.payment_method)
+        instance.commentary = validated_data.get('commentary', instance.commentary)
+        instance.save()
+
+        order_items_data = validated_data.pop('order_items')
+        existing_items = {item.id: item for item in instance.order_items.all()}
+
+        for order_item_data in order_items_data:
+            product = order_item_data.get('product')
+            item_id = order_item_data.get('id', None)
+
+            if item_id and item_id in existing_items:
+                order_item = existing_items.pop(item_id)
+                order_item.product = product
+                order_item.quantity = order_item_data.get('quantity', order_item.quantity)
+                order_item.commentary = order_item_data.get('commentary', order_item.commentary)
+                order_item.extras.set(order_item_data.get('extras', []))
+                order_item.save()
+            else:
+                OrderItem.objects.create(
+                    order=instance,
+                    product=product,
+                    quantity=order_item_data.get('quantity'),
+                    commentary=order_item_data.get('commentary'),
+                    extras=order_item_data.get('extras')
+                )
+
+        for remaining_item in existing_items.values():
+            remaining_item.delete()
+
+        return instance
 
 class DeliveryOrderSerializer(serializers.ModelSerializer):
     class Meta:
