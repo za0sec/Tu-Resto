@@ -65,9 +65,9 @@ urlpatterns = [
     path("orderitems", OrderItems.as_view(), name="orderitem_list"),
     
     # Categorías
-    path("categories/", Categories.as_view(), name="category_list"),
-    path("category/create", CategoryCreate.as_view(), name="category_create"),
-    path("category/<int:pk>", CategoryDetailView.as_view(), name="category_detail"),
+    path("restaurant/<int:restaurant_id>/categories", Categories.as_view(), name="category_list"),
+    path("restaurant/<int:restaurant_id>/category/create", CategoryCreate.as_view(), name="category_create"),
+    path("restaurant/<int:restaurant_id>/category/<int:pk>", CategoryDetailView.as_view(), name="category_detail"),
 
     # Products
     path("products/", Products.as_view(), name="product_list"),

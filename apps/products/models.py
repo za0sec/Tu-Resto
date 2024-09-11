@@ -7,6 +7,7 @@ class Category(models.Model):
     photo = models.ImageField(upload_to='categories', null=True, blank=True)
     identifier_color = models.CharField(max_length=7, null=True, blank=True)
     identifier_icon = models.CharField(max_length=255, null=True, blank=True)
+    restaurant = models.ForeignKey('restaurant.Restaurant', on_delete=models.CASCADE, related_name='categories')
 
     def __str__(self):
         return self.name

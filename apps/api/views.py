@@ -131,18 +131,35 @@ class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
 class Categories(generics.ListAPIView):
     permission_classes = [IsWaiter | IsManager | IsAdmin]
     serializer_class = CategorySerializer
-    queryset = Category.objects.all()
-    
+
+    def get_queryset(self):
+        restaurant_id = self.kwargs['restaurant_id']
+        return Category.objects.filter(restaurant_id=restaurant_id)
+
 
 class CategoryCreate(generics.CreateAPIView):
     permission_classes = [IsAdmin | IsManager]
     serializer_class = CategorySerializer
-    queryset = Category.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        restaurant_id = self.kwargs['restaurant_id']
+        mutable_data = request.data.copy()
+        mutable_data['restaurant'] = restaurant_id
+        serializer = self.get_serializer(data=mutable_data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        
 
 class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAdmin | IsManager | IsWaiter]
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+
+    def get_queryset(self):
+        restaurant_id = self.kwargs['restaurant_id']
+        return Category.objects.filter(restaurant_id=restaurant_id)
 
 
 class CategoryExtraCreate(generics.CreateAPIView):

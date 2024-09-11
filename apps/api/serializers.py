@@ -10,7 +10,6 @@ from apps.orders.models import Order, TakeAwayOrder, TableOrder, DeliveryOrder, 
 from apps.products.models import Product, ProductExtra, Category, CategoryExtra
 from apps.subscription.models import Plan, Subscription
 from django.contrib.auth.tokens import default_token_generator
-from django.urls import reverse
 from django.core.mail import send_mail
 
 
@@ -236,6 +235,10 @@ class TuRestoTokenObtainPairSerializer(TokenObtainPairSerializer):
             token['phone'] = person.phone
 
             token['role'] = person.__class__.__name__
+
+            if isinstance(person, Manager):
+                token['restaurant_id'] = person.restaurant.id if person.restaurant else None
+
         except Person.DoesNotExist:
             token['first_name'] = user.first_name
             token['last_name'] = user.last_name
