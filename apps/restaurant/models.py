@@ -1,7 +1,5 @@
 from django.db import models
 
-# Create your models here.
-
 
 class Restaurant(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -19,7 +17,7 @@ class Branch(models.Model):
     name = models.CharField(max_length=50)
     address = models.CharField(max_length=50)
     phone = models.CharField(max_length=50)
-    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name='branches')
     employees = models.ForeignKey('users.Employee', null=True, on_delete=models.SET_NULL, related_name='branch_all_employees')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

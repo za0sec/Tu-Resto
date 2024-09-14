@@ -8,14 +8,14 @@ from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
 from django.conf import settings
 
-from .permissions import IsWaiter, IsManager, IsAdmin, AllowAny
+from .permissions import IsManager, IsAdmin, AllowAny, IsBranchStaff
 from .serializers import RestaurantSerializer, BranchSerializer, ProductSerializer, ManagerSerializer, WaiterSerializer, \
     KitchenSerializer, PlanSerializer, EmployeeSerializer, TakeAwayOrderSerializer, TableOrderSerializer, DeliveryOrderSerializer, \
-    PersonSerializer, OrderSerializer, OrderItemSerializer, CategorySerializer, CategoryExtraSerializer
+    PersonSerializer, OrderSerializer, OrderItemSerializer, CategorySerializer, CategoryExtraSerializer, BranchStaffSerializer
 
 from apps.restaurant.models import Restaurant,Branch
 from apps.products.models import Product, Category, CategoryExtra
-from ..users.models import Person, Manager, Waiter, Kitchen, Employee
+from ..users.models import Person, Manager, Waiter, Kitchen, Employee, BranchStaff
 from apps.subscription.models import Plan
 
 from apps.orders.models import TakeAwayOrder, Order, TableOrder, DeliveryOrder, OrderItem
@@ -45,7 +45,7 @@ class RestaurantCreate(generics.CreateAPIView):
 
 # User Profile
 class UserProfile(APIView):
-    permission_classes = [IsManager | IsWaiter | IsAdmin]
+    permission_classes = [IsManager | IsAdmin | IsBranchStaff]
     
     def get(self, request):
         try:
@@ -88,30 +88,29 @@ class RestaurantDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 # Branches
 class BranchCreate(generics.CreateAPIView):
-    permission_classes = [IsAdmin, IsManager]
+    permission_classes = [IsAdmin | IsManager]
     queryset = Branch.objects.all()
     serializer_class = BranchSerializer
 
 
 # RUD Retrieve - Update - Destroy
 class BranchDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAdmin, IsManager]
+    permission_classes = [IsAdmin |IsManager]
     queryset = Branch.objects.all()
     serializer_class = BranchSerializer
 
 
 class Branches(generics.ListAPIView):
-    permission_classes = [IsAdmin, IsManager]
+    permission_classes = [IsAdmin | IsManager]
     serializer_class = BranchSerializer
-
+    
     def get_queryset(self):
         restaurant_id = self.kwargs['restaurant_id']
         return Branch.objects.filter(restaurant_id=restaurant_id)
 
-
 # PRODUCTS
 class Products(generics.ListAPIView):
-    permission_classes = [ IsManager | IsAdmin]
+    permission_classes = [ IsManager | IsAdmin | IsBranchStaff]
     serializer_class = ProductSerializer
     queryset = Product.objects.all()
 
@@ -123,13 +122,13 @@ class ProductCreate(generics.CreateAPIView):
 
 
 class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAdmin | IsManager | IsWaiter]
+    permission_classes = [IsAdmin | IsManager | IsBranchStaff]
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
 
 class Categories(generics.ListAPIView):
-    permission_classes = [IsWaiter | IsManager | IsAdmin]
+    permission_classes = [IsBranchStaff | IsManager | IsAdmin]
     serializer_class = CategorySerializer
 
     def get_queryset(self):
@@ -153,7 +152,7 @@ class CategoryCreate(generics.CreateAPIView):
         
 
 class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAdmin | IsManager | IsWaiter]
+    permission_classes = [IsAdmin | IsManager | IsBranchStaff]
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
@@ -169,13 +168,13 @@ class CategoryExtraCreate(generics.CreateAPIView):
 
 
 class CategoryExtraDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAdmin | IsManager | IsWaiter]
+    permission_classes = [IsAdmin | IsManager]
     queryset = CategoryExtra.objects.all()
     serializer_class = CategoryExtraSerializer
 
 
 class CategoriesExtra(generics.ListAPIView):
-    permission_classes = [IsWaiter | IsManager | IsAdmin]
+    permission_classes = [IsManager | IsAdmin]
     serializer_class = CategoryExtraSerializer
     queryset = CategoryExtra.objects.all()
         
@@ -242,13 +241,27 @@ class DailyOrders(generics.ListAPIView):
 
     def get_queryset(self):
         date = self.kwargs['date']
-        return Order.objects.filter(created_at__date=date)
+        return Order.objects.filter(created_at__date=date, branch_id=self.kwargs['branch_id'])
+    
+class DailyOrdersForRestaurant(generics.ListAPIView):
+    permission_classes = [IsAdmin | IsManager]
+    serializer_class = OrderSerializer
+    queryset = Order.objects.all()
+
+    def get_queryset(self):
+        date = self.kwargs['date']
+        return Order.objects.filter(created_at__date=date, branch__restaurant_id=self.kwargs['restaurant_id'])
     
 
 class Orders(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = OrderSerializer
-    queryset = Order.objects.all()
+
+    def get_queryset(self):
+        branch_id = self.kwargs.get('branch_id')
+        if branch_id:
+            return Order.objects.filter(branch_id=branch_id)
+        return Order.objects.none()
     
     
 class OrderDetailView(generics.RetrieveAPIView):
@@ -259,8 +272,19 @@ class OrderDetailView(generics.RetrieveAPIView):
     
 class OrderCreate(generics.CreateAPIView):
     permission_classes = [AllowAny]
-    queryset = Order.objects.all()
     serializer_class = OrderSerializer
+
+    def create(self, request, *args, **kwargs):
+        branch_id = self.kwargs.get('branch_id')
+        if not branch_id:
+            return Response({'error': 'Se requiere el ID de la sucursal'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(branch_id=branch_id)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class OrderItems(generics.ListAPIView):
@@ -309,6 +333,14 @@ class TakeAwayOrderCreate(generics.CreateAPIView):
     permission_classes = [AllowAny]
     queryset = TakeAwayOrder.objects.all()
     serializer_class = TakeAwayOrderSerializer
+
+    def create(self, request, *args, **kwargs):
+        branch_id = self.kwargs.get('branch_id')
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(branch_id=branch_id)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
     
 class TakeAwayOrderDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -323,3 +355,20 @@ class TakeAwayOrderDetailView(generics.RetrieveUpdateDestroyAPIView):
     def handle_ready_status(self, new_order):
         if new_order.ready is True and new_order.phone_number is not None:
             notifyOrderReady(new_order.phone_number, new_order)
+
+
+class BranchStaffCreate(generics.CreateAPIView):
+    permission_classes = [IsAdmin | IsManager]
+    queryset = BranchStaff.objects.all()
+    serializer_class = BranchStaffSerializer
+
+class BranchStaffs(generics.ListAPIView):
+    permission_classes = [IsAdmin | IsManager]
+    serializer_class = BranchStaffSerializer
+    queryset = BranchStaff.objects.all()
+
+
+class BranchStaffDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAdmin | IsManager]
+    queryset = BranchStaff.objects.all()
+    serializer_class = BranchStaffSerializer

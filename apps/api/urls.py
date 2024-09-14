@@ -26,6 +26,7 @@ urlpatterns = [
     path('restaurant/<int:restaurant_id>/branches', Branches.as_view(), name='restaurant-branches'),
 
     # Branches
+    path("branches/<int:restaurant_id>", Branches.as_view(), name="branch_list"),
     path("branch/create", BranchCreate.as_view(), name="branch_create"),
     path("branch/<int:pk>", BranchDetailView.as_view(), name="branch-detail-view"),
 
@@ -42,22 +43,23 @@ urlpatterns = [
     path('reset-password/', ResetPasswordConfirmView.as_view(), name='reset_password_confirm'),
     
     # Orders
-    path("orders", Orders.as_view(), name="orders"),
-    path("orders/daily/<str:date>", DailyOrders.as_view(), name="daily_orders"),
-    path("order/create", OrderCreate.as_view(), name="order_create"),
+    path("branch/<int:branch_id>/orders", Orders.as_view(), name="orders"),
+    path("branch/<int:branch_id>/orders/daily/<str:date>", DailyOrders.as_view(), name="daily_orders"),
+    path("restaurant/<int:restaurant_id>/orders/daily/<str:date>", DailyOrdersForRestaurant.as_view(), name="daily_orders_for_restaurant"),
+    path("branch/<int:branch_id>/order/create", OrderCreate.as_view(), name="order_create"),
     path("order/<int:pk>", OrderDetailView.as_view(), name="order-detail"),
     
     # takeawayorders
-    path("order/takeaway/create", TakeAwayOrderCreate.as_view(), name="takeaway_order_create"),
+    path("branch/<int:branch_id>/order/takeaway/create", TakeAwayOrderCreate.as_view(), name="takeaway_order_create"),
     path("order/takeaway/<int:pk>", TakeAwayOrderDetailView.as_view(), name="takeaway_order_detail"),
 
     # deliveryorders
-    path("order/delivery/create", DeliveryOrderCreate.as_view(), name="delivery_order_create"),
-    path("order/delivery/<int:pk>", DeliveryOrderDetailView.as_view(), name="delivery_order_detail"),
+    path("branch/<int:branch_id>/order/delivery/create", DeliveryOrderCreate.as_view(), name="delivery_order_create"),
+    path("branch/<int:branch_id>/order/delivery/<int:pk>", DeliveryOrderDetailView.as_view(), name="delivery_order_detail"),
 
     # tableorders
-    path("order/table/create", TableOrderCreate.as_view(), name="table_order_create"),
-    path("order/table/<int:pk>", TableOrderDetailView.as_view(), name="table_order_detail"),
+    path("branch/<int:branch_id>/order/table/create", TableOrderCreate.as_view(), name="table_order_create"),
+    path("branch/<int:branch_id>/order/table/<int:pk>", TableOrderDetailView.as_view(), name="table_order_detail"),
     
     # OrderItem
     path("orderitem/create", OrderItemCreate.as_view(), name="orderitem_create"),
@@ -68,6 +70,11 @@ urlpatterns = [
     path("restaurant/<int:restaurant_id>/categories", Categories.as_view(), name="category_list"),
     path("restaurant/<int:restaurant_id>/category/create", CategoryCreate.as_view(), name="category_create"),
     path("restaurant/<int:restaurant_id>/category/<int:pk>", CategoryDetailView.as_view(), name="category_detail"),
+
+    # Branch Staff
+    path("restaurant/<int:restaurant_id>/staff", BranchStaffs.as_view(), name="branch_staff_list"),
+    path("branchStaff/create", BranchStaffCreate.as_view(), name="branch_staff_create"),
+
 
     # Products
     path("products/", Products.as_view(), name="product_list"),

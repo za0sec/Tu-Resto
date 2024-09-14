@@ -5,6 +5,7 @@ class Order(models.Model):
     """ Customer Order """
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    branch = models.ForeignKey('restaurant.Branch', on_delete=models.CASCADE)
     items = models.ManyToManyField('products.Product', through='OrderItem')
     paid = models.BooleanField(default=False)
     delivered = models.BooleanField(default=False)
@@ -12,9 +13,9 @@ class Order(models.Model):
     payment_method = models.CharField(max_length=50, null=True, blank=True)
     discount = models.DecimalField(max_digits=3, decimal_places=2, default=0)
     commentary = models.CharField(max_length=255, null=True, blank=True)
+    
     def __str__(self) -> str:
-        items_str = ", ".join([f"{item.product.name} x{item.quantity}" for item in self.order_items.all()])
-        return f"Order {self.id} - {self.created_at}\nItems: {items_str}"
+        return f"Order {self.id} - {self.created_at.date()}"
 
     def get_total(self):
         return sum([item.get_total() for item in self.order_items.all()])

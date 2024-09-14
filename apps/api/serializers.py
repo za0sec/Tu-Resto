@@ -11,6 +11,8 @@ from apps.products.models import Product, ProductExtra, Category, CategoryExtra
 from apps.subscription.models import Plan, Subscription
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django.db import models
+
 
 
 from django.conf import settings
@@ -84,36 +86,6 @@ class KitchenSerializer(serializers.ModelSerializer):
 
 # RESTAURANTS
 
-class RestaurantSerializer(serializers.ModelSerializer):
-    employees = EmployeeSerializer(many=True, read_only=True)
-    subscriptions = SubscriptionSerializer(read_only=True)
-    banner = serializers.SerializerMethodField()
-
-    def get_banner(self, obj):
-        if obj.banner:
-            return settings.PAGE_URL + obj.banner.url
-        return None
-
-    class Meta:
-        model = Restaurant
-        fields = ('id', 'name', 'website', 'employees', 'banner', 'subscriptions')
-
-    def create(self, validated_data):
-        banner = validated_data.pop('banner', None)
-        restaurant = Restaurant.objects.create(**validated_data)
-        if banner:
-            restaurant.banner = banner
-            restaurant.save()
-        return restaurant
-
-    def update(self, instance, validated_data):
-        banner = validated_data.pop('banner', None)
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        if banner:
-            instance.banner = banner
-        instance.save()
-        return instance
     
 
 
@@ -124,11 +96,6 @@ class TableSerializer(serializers.ModelSerializer):
         model = Table
         fields = ('number', 'capacity', 'branch' )
 
-
-class BranchSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Branch
-        fields = ('id', 'name', 'address', 'phone', 'restaurant')
 
 
 class ManagerSerializer(serializers.ModelSerializer):
@@ -236,8 +203,10 @@ class TuRestoTokenObtainPairSerializer(TokenObtainPairSerializer):
 
             token['role'] = person.__class__.__name__
 
-            if isinstance(person, Manager):
-                token['restaurant_id'] = person.restaurant.id if person.restaurant else None
+            if isinstance(person, Manager) or isinstance(person, BranchStaff):
+                token['restaurant_id'] = person.restaurant.id if hasattr(person, 'restaurant') and person.restaurant else (person.branch.restaurant.id if hasattr(person, 'branch') and person.branch else None)
+            if isinstance(person, BranchStaff):
+                token['branch_id'] = person.branch.id if person.branch else None
 
         except Person.DoesNotExist:
             token['first_name'] = user.first_name
@@ -398,3 +367,84 @@ class DeliveryOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeliveryOrder
         fields =  '__all__'
+
+class BranchStaffSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    branch = serializers.PrimaryKeyRelatedField(queryset=Branch.objects.all(), write_only=True)
+
+    class Meta:
+        model = BranchStaff
+        fields = ['user', 'phone', 'branch']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['branch'] = BranchSerializer(instance.branch).data
+        return representation
+
+    def create(self, validated_data):
+        user_data = validated_data.pop('user')
+        branch = validated_data.pop('branch')
+        user = User.objects.create_user(**user_data)
+        branch_staff = BranchStaff.objects.create(user=user, branch=branch, **validated_data)
+
+        token = default_token_generator.make_token(user)
+        uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+
+        reset_url = f"{settings.FRONTEND_URL}/reset-password?uidb64={uidb64}&token={token}"
+
+        self.send_password_reset_email(user.email, reset_url)
+
+        return branch_staff
+
+    def send_password_reset_email(self, email, reset_url):
+        subject = "Crea tu contraseña"
+        message = f"Por favor, haz clic en el siguiente enlace para crear tu contraseña: {reset_url}"
+        from_email = settings.DEFAULT_FROM_EMAIL
+        recipient_list = [email]
+        send_mail(subject, message, from_email, recipient_list)
+
+
+class BranchSerializer(serializers.ModelSerializer):
+    branch_employees = EmployeeSerializer(many=True, read_only=True)
+    class Meta:
+        model = Branch
+        fields = ('id', 'name', 'address', 'phone', 'restaurant', 'branch_employees')
+
+
+class RestaurantSerializer(serializers.ModelSerializer):
+    employees = serializers.SerializerMethodField()
+    subscriptions = SubscriptionSerializer(read_only=True)
+    banner = serializers.SerializerMethodField()
+    branches = serializers.SerializerMethodField()
+
+    def get_branches(self, obj):
+        return Branch.objects.filter(restaurant=obj).count()
+
+    def get_banner(self, obj):
+        if obj.banner:
+            return settings.PAGE_URL + obj.banner.url
+        return None
+    
+    def get_employees(self, obj):
+        return Employee.objects.filter(branch__restaurant=obj).count()
+
+    class Meta:
+        model = Restaurant
+        fields = ('id', 'name', 'website', 'employees', 'banner', 'subscriptions', 'branches')
+
+    def create(self, validated_data):
+        banner = validated_data.pop('banner', None)
+        restaurant = Restaurant.objects.create(**validated_data)
+        if banner:
+            restaurant.banner = banner
+            restaurant.save()
+        return restaurant
+
+    def update(self, instance, validated_data):
+        banner = validated_data.pop('banner', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if banner:
+            instance.banner = banner
+        instance.save()
+        return instance
