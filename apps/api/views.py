@@ -20,6 +20,7 @@ from apps.orders.models import TakeAwayOrder, Order, TableOrder, DeliveryOrder, 
 from apps.wpp.views import notifyOrderReady
 
 class HelloWorld(APIView):
+    permission_classes = [AllowAny]
     def get(request):
         return "Hello"
 
