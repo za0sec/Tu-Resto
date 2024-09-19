@@ -13,6 +13,8 @@ class Order(models.Model):
     payment_method = models.CharField(max_length=50, null=True, blank=True)
     discount = models.DecimalField(max_digits=3, decimal_places=2, default=0)
     commentary = models.CharField(max_length=255, null=True, blank=True)
+    branch_staff = models.ForeignKey('users.BranchStaff', on_delete=models.CASCADE, null=True, blank=True)
+    consumer = models.CharField(max_length=255, null=True, blank=True)
     
     def __str__(self) -> str:
         return f"Order {self.id} - {self.created_at.date()}"
@@ -65,7 +67,6 @@ class DeliveryOrder(Order):
 class TakeAwayOrder(Order):
     """ Take Away Order """
     phone_number = models.CharField(max_length=50, null=True, blank=True)
-    branch_staff = models.ForeignKey('users.BranchStaff', on_delete=models.CASCADE, null=True, blank=True)
     ready = models.BooleanField(default=False)
 
     def __str__(self):

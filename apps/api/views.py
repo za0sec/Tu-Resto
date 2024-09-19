@@ -9,9 +9,7 @@ from django.utils.encoding import force_str
 from django.conf import settings
 
 from .permissions import IsManager, IsAdmin, AllowAny, IsBranchStaff
-from .serializers import RestaurantSerializer, BranchSerializer, ProductSerializer, ManagerSerializer, WaiterSerializer, \
-    KitchenSerializer, PlanSerializer, EmployeeSerializer, TakeAwayOrderSerializer, TableOrderSerializer, DeliveryOrderSerializer, \
-    PersonSerializer, OrderSerializer, OrderItemSerializer, CategorySerializer, CategoryExtraSerializer, BranchStaffSerializer
+from .serializers import *
 
 from apps.restaurant.models import Restaurant,Branch
 from apps.products.models import Product, Category, CategoryExtra
@@ -330,7 +328,7 @@ class TableOrderDetailView(generics.RetrieveUpdateDestroyAPIView):
     
 
 class TakeAwayOrderCreate(generics.CreateAPIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsManager | IsBranchStaff | IsAdmin]
     queryset = TakeAwayOrder.objects.all()
     serializer_class = TakeAwayOrderSerializer
 
@@ -365,9 +363,15 @@ class BranchStaffCreate(generics.CreateAPIView):
 class BranchStaffs(generics.ListAPIView):
     permission_classes = [IsAdmin | IsManager]
     serializer_class = BranchStaffSerializer
-    queryset = BranchStaff.objects.all()
 
+class BranchStaffList(generics.ListAPIView):
+    permission_classes = [IsAdmin | IsManager | IsBranchStaff]
+    serializer_class = BranchStaffListSerializer
 
+    def get_queryset(self):
+        branch_id = self.kwargs['branch_id']
+        return BranchStaff.objects.filter(branch_id=branch_id)
+    
 class BranchStaffDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAdmin | IsManager]
     queryset = BranchStaff.objects.all()

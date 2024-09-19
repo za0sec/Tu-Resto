@@ -73,6 +73,7 @@ urlpatterns = [
 
     # Branch Staff
     path("restaurant/<int:restaurant_id>/staff", BranchStaffs.as_view(), name="branch_staff_list"),
+    path("branch/<int:branch_id>/staff", BranchStaffList.as_view(), name="branch_staff_list"),
     path("branchStaff/create", BranchStaffCreate.as_view(), name="branch_staff_create"),
 
 

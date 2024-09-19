@@ -218,19 +218,6 @@ class TuRestoTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 # ORDERS
 
-class OrderSerializer(serializers.ModelSerializer):
-    total = serializers.SerializerMethodField()
-    items = serializers.SerializerMethodField()
-
-    def get_total(self, obj):
-        return obj.get_total()
-    
-    def get_items(self, obj):
-        return OrderItemSerializer(obj.order_items.all(), many=True).data
-    
-    class Meta:
-        model = Order
-        fields = '__all__'
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
@@ -257,6 +244,11 @@ class TakeAwayOrderSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         order_items_data = validated_data.pop('order_items', None)
+        branch_staff_id = validated_data.pop('branch_staff', None)
+
+        if branch_staff_id:
+            branch_staff = BranchStaff.objects.get(id=branch_staff_id.id)   
+            validated_data['branch_staff'] = branch_staff
 
         takeaway_order = TakeAwayOrder.objects.create(**validated_data)
 
@@ -404,6 +396,13 @@ class BranchStaffSerializer(serializers.ModelSerializer):
         send_mail(subject, message, from_email, recipient_list)
 
 
+class BranchStaffListSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    class Meta:
+        model = BranchStaff
+        fields = ['id', 'user', 'phone', 'branch']
+
+
 class BranchSerializer(serializers.ModelSerializer):
     branch_employees = EmployeeSerializer(many=True, read_only=True)
     class Meta:
@@ -448,3 +447,18 @@ class RestaurantSerializer(serializers.ModelSerializer):
             instance.banner = banner
         instance.save()
         return instance
+    
+class OrderSerializer(serializers.ModelSerializer):
+    total = serializers.SerializerMethodField()
+    items = serializers.SerializerMethodField()
+    branch_staff = BranchStaffSerializer()
+
+    def get_total(self, obj):
+        return obj.get_total()
+    
+    def get_items(self, obj):
+        return OrderItemSerializer(obj.order_items.all(), many=True).data
+    
+    class Meta:
+        model = Order
+        fields = '__all__'
