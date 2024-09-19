@@ -7,7 +7,7 @@ jobs:
       - run:
           name: Deploy With SSH
           command: |
-            ssh $USER:$IP "cd Tu-Resto && git pull && docker compose up -d --build"
+            ssh $USER@$IP "cd Tu-Resto && git pull && docker compose up -d --build"
 workflows:
   deploy:
     jobs:
