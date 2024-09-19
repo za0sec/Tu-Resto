@@ -1,13 +1,12 @@
 from django.db import models
 
-# Create your models here.
-
 
 class Restaurant(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     website = models.URLField()
+    banner = models.ImageField(upload_to='media/restaurants/banners/', null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -18,10 +17,18 @@ class Branch(models.Model):
     name = models.CharField(max_length=50)
     address = models.CharField(max_length=50)
     phone = models.CharField(max_length=50)
-    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
-    employees = models.ForeignKey('users.Employee', null=True, on_delete=models.SET_NULL)
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name='branches')
+    employees = models.ForeignKey('users.Employee', null=True, on_delete=models.SET_NULL, related_name='branch_all_employees')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['name', 'address'], name='unique_branch')
+        ]
+
+    def __str__(self):
+        return f"{self.name} at {self.address}"
 
 
 class Table(models.Model):
