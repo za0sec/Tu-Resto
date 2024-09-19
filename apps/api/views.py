@@ -19,6 +19,11 @@ from apps.subscription.models import Plan
 from apps.orders.models import TakeAwayOrder, Order, TableOrder, DeliveryOrder, OrderItem
 from apps.wpp.views import notifyOrderReady
 
+class HelloWorld(APIView):
+    def get(request):
+        return "Hello"
+
+
 # Subscription
 class Plans(generics.ListAPIView):
     permission_classes = [AllowAny]
