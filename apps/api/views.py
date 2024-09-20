@@ -369,6 +369,10 @@ class BranchStaffCreate(generics.CreateAPIView):
 class BranchStaffs(generics.ListAPIView):
     permission_classes = [IsAdmin | IsManager]
     serializer_class = BranchStaffSerializer
+    
+    def get_queryset(self):
+        restaurant_id = self.kwargs.get('restaurant_id')
+        return BranchStaff.objects.filter(branch__restaurant_id=restaurant_id)
 
 class BranchStaffList(generics.ListAPIView):
     permission_classes = [IsAdmin | IsManager | IsBranchStaff]
