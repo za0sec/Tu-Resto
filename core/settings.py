@@ -36,9 +36,13 @@ ROOT_URLCONF = 'core.urls'
 ROOT_HOSTCONF = 'core.hosts'
 
 #TODO   servir api default
-DEFAULT_HOST = 'api'
+DEFAULT_HOST = 'root'
 
 SHELL_PLUS = "ipython"
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 
 # TODO: cambiar tiempo de expiracion
 SIMPLE_JWT = {
