@@ -29,6 +29,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+FRONTEND_URL = 'https://api.turesto.tech'
+
 INTERNAL_IPS = ('127.0.0.1', 'localhost')
 
 ROOT_URLCONF = 'core.urls'
