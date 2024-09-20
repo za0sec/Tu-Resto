@@ -29,7 +29,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-FRONTEND_URL = 'https://api.turesto.tech'
+FRONTEND_URL = 'https://tu-resto-front.vercel.app'
 
 INTERNAL_IPS = ('127.0.0.1', 'localhost')
 
