@@ -89,6 +89,11 @@ urlpatterns = [
     path("category-extra/create", CategoryExtraCreate.as_view(), name="category_extra_create"),
     path("category-extra/<int:pk>", CategoryExtraDetailView.as_view(), name="category_extra_detail"),
 
+    # Tables
+    path("branch/<int:branch_id>/tables", Tables.as_view(), name="table_list"),
+    path("table/create", TableCreate.as_view(), name="table_create"),
+    path("table/<int:pk>", TableDetailView.as_view(), name="table_detail"),
+
     # Planes de suscripción
     path("plans/", Plans.as_view(), name="plan_list"),
 ]

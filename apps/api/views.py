@@ -386,3 +386,26 @@ class BranchStaffDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAdmin | IsManager]
     queryset = BranchStaff.objects.all()
     serializer_class = BranchStaffSerializer
+
+
+# TABLES
+class Tables(generics.ListAPIView):
+    permission_classes = [IsManager | IsAdmin | IsBranchStaff]
+    serializer_class = TableSerializer
+    queryset = Table.objects.all()
+
+    def get_queryset(self):
+        branch_id = self.kwargs['branch_id']
+        return Table.objects.filter(branch_id=branch_id)
+    
+
+class TableCreate(generics.CreateAPIView):
+    permission_classes = [IsAdmin | IsManager]
+    queryset = Table.objects.all()
+    serializer_class = TableSerializer
+
+
+class TableDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAdmin | IsManager]
+    queryset = Table.objects.all()
+    serializer_class = TableSerializer

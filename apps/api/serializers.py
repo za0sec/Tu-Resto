@@ -13,7 +13,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db import models
 
-
+import json
 
 from django.conf import settings
 
@@ -86,16 +86,12 @@ class KitchenSerializer(serializers.ModelSerializer):
 
 # RESTAURANTS
 
-    
-
-
 
 # TABLES
 class TableSerializer(serializers.ModelSerializer):
     class Meta:
         model = Table
-        fields = ('number', 'capacity', 'branch' )
-
+        fields = '__all__'
 
 
 class ManagerSerializer(serializers.ModelSerializer):
