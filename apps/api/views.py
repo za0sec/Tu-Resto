@@ -322,9 +322,17 @@ class DeliveryOrderDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class TableOrderCreate(generics.CreateAPIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsManager | IsBranchStaff | IsAdmin]
     queryset = TableOrder.objects.all()
     serializer_class = TableOrderSerializer
+
+    def create(self, request, *args, **kwargs):
+        branch_id = self.kwargs.get('branch_id')
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(branch_id=branch_id)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class TableOrderDetailView(generics.RetrieveUpdateDestroyAPIView):

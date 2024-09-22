@@ -55,13 +55,13 @@ urlpatterns = [
     path("branch/<int:branch_id>/order/takeaway/create", TakeAwayOrderCreate.as_view(), name="takeaway_order_create"),
     path("order/takeaway/<int:pk>", TakeAwayOrderDetailView.as_view(), name="takeaway_order_detail"),
 
-    # deliveryorders
-    path("branch/<int:branch_id>/order/delivery/create", DeliveryOrderCreate.as_view(), name="delivery_order_create"),
-    path("branch/<int:branch_id>/order/delivery/<int:pk>", DeliveryOrderDetailView.as_view(), name="delivery_order_detail"),
+    # # deliveryorders
+    # path("branch/<int:branch_id>/order/delivery/create", DeliveryOrderCreate.as_view(), name="delivery_order_create"),
+    # path("branch/<int:branch_id>/order/delivery/<int:pk>", DeliveryOrderDetailView.as_view(), name="delivery_order_detail"),
 
     # tableorders
     path("branch/<int:branch_id>/order/table/create", TableOrderCreate.as_view(), name="table_order_create"),
-    path("branch/<int:branch_id>/order/table/<int:pk>", TableOrderDetailView.as_view(), name="table_order_detail"),
+    path("order/table/<int:pk>", TableOrderDetailView.as_view(), name="table_order_detail"),
     
     # OrderItem
     path("orderitem/create", OrderItemCreate.as_view(), name="orderitem_create"),
