@@ -1,5 +1,5 @@
 from django.db import models
-
+from model_utils.managers import InheritanceManager
 
 class Order(models.Model):
     """ Customer Order """
@@ -15,7 +15,9 @@ class Order(models.Model):
     commentary = models.CharField(max_length=255, null=True, blank=True)
     branch_staff = models.ForeignKey('users.BranchStaff', on_delete=models.CASCADE, null=True, blank=True)
     consumer = models.CharField(max_length=255, null=True, blank=True)
-    
+
+    objects = InheritanceManager()
+
     def __str__(self) -> str:
         return f"Order {self.id} - {self.created_at.date()}"
 

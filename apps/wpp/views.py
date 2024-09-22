@@ -63,7 +63,12 @@ class LatestOrderWppUrl(APIView):
     permission_classes = [AllowAny]
     
     def get(self, request):
-        wpp_url = f"https://wa.me/{settings.WHATSAPP[0]['RECEIVER_PHONE_NUMBER']}?text={TakeAwayOrder.objects.last().id}"
+        branch = request.GET.get('branch')
+        try:
+            wpp_url = f"https://wa.me/{settings.WHATSAPP[0]['RECEIVER_PHONE_NUMBER']}?text={TakeAwayOrder.objects.filter(branch_id=branch).last().id}"
+        except Exception as e:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
         return Response(status=status.HTTP_200_OK, data=wpp_url)
     
         
