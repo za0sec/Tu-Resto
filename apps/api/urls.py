@@ -62,6 +62,8 @@ urlpatterns = [
     # tableorders
     path("branch/<int:branch_id>/order/table/create", TableOrderCreate.as_view(), name="table_order_create"),
     path("order/table/<int:pk>", TableOrderDetailView.as_view(), name="table_order_detail"),
+    path("orders/table/<int:table_id>", TableOrdersByTableView.as_view(), name="order_by_table"),
+
     
     # OrderItem
     path("orderitem/create", OrderItemCreate.as_view(), name="orderitem_create"),

@@ -341,6 +341,28 @@ class TableOrderDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TableOrderSerializer
     
 
+class TableOrdersByTableView(generics.ListAPIView):
+    """
+    Vista para obtener todas las órdenes relacionadas con una mesa específica.
+    """
+    permission_classes = [AllowAny]
+    serializer_class = TableOrderSerializer
+
+    def get_queryset(self):
+        table_id = self.kwargs['table_id']
+        # Filtrar las órdenes para la mesa especificada
+        orders = TableOrder.objects.filter(table__id=table_id)
+        
+        # Si no hay órdenes, devolver un queryset vacío
+        return orders
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        
+        # Retorna el resultado serializado (puede ser un array vacío)
+        return Response(serializer.data)
+
 class TakeAwayOrderCreate(generics.CreateAPIView):
     permission_classes = [IsManager | IsBranchStaff | IsAdmin]
     queryset = TakeAwayOrder.objects.all()
