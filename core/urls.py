@@ -2,7 +2,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
 
+from apps.wpp.views import *
+
 urlpatterns = [
+    # wpp bot api custom
+    path("wpp", Whatsapp.as_view(), name="wpp"),
 ]
 
 if settings.DEBUG:

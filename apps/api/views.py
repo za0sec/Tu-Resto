@@ -341,6 +341,24 @@ class TableOrderDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TableOrderSerializer
     
 
+class TableOrdersByTableView(generics.ListAPIView):
+    """
+    Vista para obtener todas las órdenes relacionadas con una mesa específica.
+    """
+    permission_classes = [AllowAny]
+    serializer_class = TableOrderSerializer
+
+    def get_queryset(self):
+        table_id = self.kwargs['table_id']
+        # Filtrar las órdenes para la mesa especificada
+        orders = TableOrder.objects.filter(table__id=table_id)
+        
+        last_order = orders.last() if orders.exists() else None
+        
+        # Si hay una última orden, devolverla en un queryset; si no, devolver vacío
+        return [last_order] if last_order else orders.none()
+
+
 class TakeAwayOrderCreate(generics.CreateAPIView):
     permission_classes = [IsManager | IsBranchStaff | IsAdmin]
     queryset = TakeAwayOrder.objects.all()
@@ -366,7 +384,7 @@ class TakeAwayOrderDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def handle_ready_status(self, new_order):
         if new_order.ready is True and new_order.phone_number is not None:
-            notifyOrderReady(new_order.phone_number, new_order)
+            notifyOrderReady(new_order)
 
 
 class BranchStaffCreate(generics.CreateAPIView):

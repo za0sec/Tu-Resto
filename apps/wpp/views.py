@@ -6,7 +6,7 @@ import json
 from rest_framework.permissions import AllowAny
 from rest_framework import status
 from apps.orders.models import TakeAwayOrder
-from .serializers import WhatsappMessageSerializer
+from .serializers import WhatsappWebBotMessageSerializer
 
 
 class WhatsappReceiver(APIView):
@@ -57,22 +57,44 @@ class WhatsappReceiver(APIView):
         except ValueError:
             print(f"ID de orden inválido: {message_body}")
   
-            
+      
+class Whatsapp(APIView):
+    permission_classes = [AllowAny]
+    serializer = WhatsappWebBotMessageSerializer()
+    
+    def post(self, request):
+        order_id = request.data.get('body')
+        phone_number = request.data.get('phone_number')
+        print(f"Mensaje de WhatsApp: {order_id}")
+        handle_message_body_custom(phone_number, order_id)
+        return Response(status=status.HTTP_200_OK)
+    
+def handle_message_body_custom(phone_number, order_id):
+    try:
+        order = TakeAwayOrder.objects.get(id=order_id)
+        order.phone_number = phone_number
+        order.save()
+    except TakeAwayOrder.DoesNotExist:
+        print(f"[DEBUG handle_message_body] No se encontró una orden con ID: {order_id}")
+    except ValueError:
+        print(f"[DEBUG handle_message_body] ID de orden inválido: {order_id}")
+
+
 # BEEPERS
 class LatestOrderWppUrl(APIView):
     permission_classes = [AllowAny]
     
-    def get(self, request):
-        branch = request.GET.get('branch')
+    def get(self, request, *args, **kwargs):
+        branch = self.kwargs.get('branch')
         try:
-            wpp_url = f"https://wa.me/{settings.WHATSAPP[0]['RECEIVER_PHONE_NUMBER']}?text={TakeAwayOrder.objects.filter(branch_id=branch).last().id}"
+            wpp_url = f"https://wa.me/{settings.WPP_BOT_API[0]['RECEIVER_PHONE_NUMBER']}?text=Hola!%20Tengo%20el%20pedido:%20{TakeAwayOrder.objects.filter(branch_id=branch).last().id}"
         except Exception as e:
             return Response(status=status.HTTP_404_NOT_FOUND)
         
         return Response(status=status.HTTP_200_OK, data=wpp_url)
     
         
-def send_whatsapp_message(phone_number, body):
+def send_whatsapp_message_meta_api(phone_number, body):
     url = f"https://graph.facebook.com/v20.0/{settings.WHATSAPP[0]['PHONE_NUMBER_ID']}/messages"
     
     headers = {
@@ -95,6 +117,20 @@ def send_whatsapp_message(phone_number, body):
     if respuesta.status_code != 200:
         print(f"Error al enviar el mensaje: {respuesta.status_code} - {respuesta.text}")
 
-def notifyOrderReady(phone_number, orden):
+def send_whatsapp_message(phone_number, message):
+    url = f"{settings.WPP_BOT_URL}/send-message"
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "phone_number": phone_number,
+        "message": message
+    }
+
+    requests.post(url, headers=headers, data=json.dumps(data))
+
+def notifyOrderReady(orden):
     msg = f"¡Tu pedido #{orden.id} está listo!"
-    send_whatsapp_message(phone_number, msg)
+    send_whatsapp_message(orden.phone_number, msg)

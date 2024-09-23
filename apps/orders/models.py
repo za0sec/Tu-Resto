@@ -53,7 +53,7 @@ class TableOrder(Order):
     status_closed = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"Table {self.table.number} Order {self.order.id}"
+        return f"Table {self.table.number} Order {self.id}"
 
 
 class DeliveryOrder(Order):
