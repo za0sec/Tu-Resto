@@ -6,7 +6,7 @@ import json
 from rest_framework.permissions import AllowAny
 from rest_framework import status
 from apps.orders.models import TakeAwayOrder
-from .serializers import WhatsappMessageSerializer
+from .serializers import WhatsappWebBotMessageSerializer
 
 
 class WhatsappReceiver(APIView):
@@ -57,7 +57,30 @@ class WhatsappReceiver(APIView):
         except ValueError:
             print(f"ID de orden inválido: {message_body}")
   
-            
+      
+class Whatsapp(APIView):
+    permission_classes = [AllowAny]
+    serializer = WhatsappWebBotMessageSerializer()
+    
+    def post(self, request):
+        order_id = request.data.get('body')
+        phone_number = request.data.get('phone_number')
+        print(f"Mensaje de WhatsApp: {order_id}")
+        handle_message_body_custom(phone_number, order_id)
+        return Response(status=status.HTTP_200_OK)
+    
+def handle_message_body_custom(phone_number, order_id):
+    print(order_id)
+    try:
+        order = TakeAwayOrder.objects.get(id=order_id)
+        order.phone_number = phone_number
+        order.save()
+    except TakeAwayOrder.DoesNotExist:
+        print(f"[DEBUG handle_message_body] No se encontró una orden con ID: {order_id}")
+    except ValueError:
+        print(f"[DEBUG handle_message_body] ID de orden inválido: {order_id}")
+
+
 # BEEPERS
 class LatestOrderWppUrl(APIView):
     permission_classes = [AllowAny]
