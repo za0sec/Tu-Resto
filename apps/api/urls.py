@@ -3,6 +3,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, Sp
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib.auth import views as auth_views
 
+
 from .views import *
 from .authenticator import *
 
@@ -98,4 +99,6 @@ urlpatterns = [
 
     # Planes de suscripción
     path("plans/", Plans.as_view(), name="plan_list"),
+    
+    
 ]

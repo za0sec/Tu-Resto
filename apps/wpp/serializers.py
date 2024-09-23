@@ -49,3 +49,8 @@ class WhatsappMessageSerializer(serializers.Serializer):
         if not data.get('metadata') or not data.get('contacts') or not data.get('messages'):
             raise serializers.ValidationError("Faltan datos necesarios")
         return data
+
+
+class WhatsappWebBotMessageSerializer(serializers.Serializer):
+    body = serializers.CharField()
+    phone_number = serializers.CharField()
