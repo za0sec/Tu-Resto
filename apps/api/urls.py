@@ -99,6 +99,4 @@ urlpatterns = [
 
     # Planes de suscripción
     path("plans/", Plans.as_view(), name="plan_list"),
-    
-    
 ]

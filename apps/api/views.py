@@ -384,7 +384,7 @@ class TakeAwayOrderDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def handle_ready_status(self, new_order):
         if new_order.ready is True and new_order.phone_number is not None:
-            notifyOrderReady(new_order.phone_number, new_order)
+            notifyOrderReady(new_order)
 
 
 class BranchStaffCreate(generics.CreateAPIView):
