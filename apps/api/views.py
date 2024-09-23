@@ -353,15 +353,11 @@ class TableOrdersByTableView(generics.ListAPIView):
         # Filtrar las órdenes para la mesa especificada
         orders = TableOrder.objects.filter(table__id=table_id)
         
-        # Si no hay órdenes, devolver un queryset vacío
-        return orders
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
+        last_order = orders.last() if orders.exists() else None
         
-        # Retorna el resultado serializado (puede ser un array vacío)
-        return Response(serializer.data)
+        # Si hay una última orden, devolverla en un queryset; si no, devolver vacío
+        return [last_order] if last_order else orders.none()
+
 
 class TakeAwayOrderCreate(generics.CreateAPIView):
     permission_classes = [IsManager | IsBranchStaff | IsAdmin]
