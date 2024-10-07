@@ -455,6 +455,7 @@ class OrderSerializer(serializers.ModelSerializer):
     items = serializers.SerializerMethodField()
     branch_staff = BranchStaffSerializer()
     order_type = serializers.SerializerMethodField()
+    table = serializers.SerializerMethodField()
 
     def get_total(self, obj):
         return obj.get_total()
@@ -464,6 +465,12 @@ class OrderSerializer(serializers.ModelSerializer):
     
     def get_order_type(self, obj):
         return Order.objects.get_subclass(id=obj.id).__class__.__name__
+    
+    def get_table(self, obj):
+        order_subclass = Order.objects.get_subclass(id=obj.id)
+        if isinstance(order_subclass, TableOrder):
+            return TableSerializer(order_subclass.table).data
+        return None
     
     class Meta:
         model = Order

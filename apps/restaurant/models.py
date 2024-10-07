@@ -32,7 +32,7 @@ class Branch(models.Model):
 
 
 class Table(models.Model):
-    number = models.IntegerField(unique=True)
+    number = models.IntegerField()
     capacity = models.IntegerField()
     position_x = models.IntegerField()
     position_y = models.IntegerField()
@@ -40,10 +40,11 @@ class Table(models.Model):
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
     waiter = models.ForeignKey('users.Waiter', on_delete=models.SET_NULL, null=True)
 
-    # class Meta:
-    #     constraints = [
-    #         models.UniqueConstraint(fields=['position_x', 'position_y', 'branch', 'number'], name='unique_table')
-    #     ]
+    class Meta:
+           constraints = [
+            models.UniqueConstraint(fields=['number', 'branch'], name='unique_table_number_per_branch'),
+            models.UniqueConstraint(fields=['position_x', 'position_y', 'branch'], name='unique_table_position_per_branch'),
+        ]
 
     def __str__(self):
         return f"Table {self.number} at {self.branch.name}"
