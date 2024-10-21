@@ -457,6 +457,7 @@ class OrderSerializer(serializers.ModelSerializer):
     branch_staff = BranchStaffSerializer()
     order_type = serializers.SerializerMethodField()
     table = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
 
     def get_total(self, obj):
         return obj.get_total()
@@ -471,6 +472,14 @@ class OrderSerializer(serializers.ModelSerializer):
         order_subclass = Order.objects.get_subclass(id=obj.id)
         if isinstance(order_subclass, TableOrder):
             return TableSerializer(order_subclass.table).data
+        return None
+    
+    def get_status(self, obj):
+        order_subclass = Order.objects.get_subclass(id=obj.id)
+        if isinstance(order_subclass, TableOrder):
+            return order_subclass.status_closed
+        elif isinstance(order_subclass, TakeAwayOrder):
+            return order_subclass.ready
         return None
     
     class Meta:
