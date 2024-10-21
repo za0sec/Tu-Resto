@@ -9,6 +9,7 @@ from apps.restaurant.models import Restaurant, Table, Branch
 from apps.orders.models import Order, TakeAwayOrder, TableOrder, DeliveryOrder, OrderItem
 from apps.products.models import Product, ProductExtra, Category, CategoryExtra
 from apps.subscription.models import Plan, Subscription
+from apps.reservations.models import Reservation
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db import models
@@ -474,4 +475,9 @@ class OrderSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Order
+        fields = '__all__'
+
+class ReservationSerializer(serializers.ModelSerializer):    
+    class Meta:
+        model = Reservation
         fields = '__all__'
