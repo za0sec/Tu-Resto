@@ -99,4 +99,8 @@ urlpatterns = [
 
     # Planes de suscripción
     path("plans/", Plans.as_view(), name="plan_list"),
+
+    path("reservation/create", ReservationCreate.as_view(), name="reservation_create"),
+    path("branch/<int:branch_id>/reservations", ReservationList.as_view(), name="reservations"),
+    path("reservation/<int:pk>", ReservationDetailView.as_view(), name="reservation_detail"),
 ]

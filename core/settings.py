@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     'apps.restaurant',
     'apps.subscription',
     'apps.api',
+    'apps.reservations',
     'django_extensions',
     'rest_framework',
     'rest_framework_simplejwt',

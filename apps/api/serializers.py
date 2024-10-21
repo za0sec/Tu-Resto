@@ -9,6 +9,7 @@ from apps.restaurant.models import Restaurant, Table, Branch
 from apps.orders.models import Order, TakeAwayOrder, TableOrder, DeliveryOrder, OrderItem
 from apps.products.models import Product, ProductExtra, Category, CategoryExtra
 from apps.subscription.models import Plan, Subscription
+from apps.reservations.models import Reservation
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db import models
@@ -456,6 +457,7 @@ class OrderSerializer(serializers.ModelSerializer):
     branch_staff = BranchStaffSerializer()
     order_type = serializers.SerializerMethodField()
     table = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
 
     def get_total(self, obj):
         return obj.get_total()
@@ -472,6 +474,19 @@ class OrderSerializer(serializers.ModelSerializer):
             return TableSerializer(order_subclass.table).data
         return None
     
+    def get_status(self, obj):
+        order_subclass = Order.objects.get_subclass(id=obj.id)
+        if isinstance(order_subclass, TableOrder):
+            return order_subclass.status_closed
+        elif isinstance(order_subclass, TakeAwayOrder):
+            return order_subclass.ready
+        return None
+    
     class Meta:
         model = Order
+        fields = '__all__'
+
+class ReservationSerializer(serializers.ModelSerializer):    
+    class Meta:
+        model = Reservation
         fields = '__all__'

@@ -435,3 +435,22 @@ class TableDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAdmin | IsManager]
     queryset = Table.objects.all()
     serializer_class = TableSerializer
+
+class ReservationList(generics.ListAPIView):    
+    permission_classes = [IsManager | IsAdmin | IsBranchStaff]
+    serializer_class = ReservationSerializer
+    queryset = Reservation.objects.all()
+
+    def get_queryset(self):
+        branch_id = self.kwargs['branch_id']
+        return Reservation.objects.filter(branch_id=branch_id)
+
+class ReservationCreate(generics.CreateAPIView):
+    permission_classes = [IsManager | IsAdmin | IsBranchStaff]
+    queryset = Reservation.objects.all()
+    serializer_class = ReservationSerializer
+
+class ReservationDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsManager | IsAdmin | IsBranchStaff]
+    queryset = Reservation.objects.all()
+    serializer_class = ReservationSerializer
