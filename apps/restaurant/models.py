@@ -38,6 +38,7 @@ class Table(models.Model):
     position_y = models.IntegerField()
     bookable = models.BooleanField(default=True)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
+    #TODO: Remove this key
     waiter = models.ForeignKey('users.Waiter', on_delete=models.SET_NULL, null=True)
 
     class Meta:
