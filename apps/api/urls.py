@@ -94,6 +94,8 @@ urlpatterns = [
 
     # Tables
     path("branch/<int:branch_id>/tables", Tables.as_view(), name="table_list"),
+    path("branch/<int:branch_id>/tables/available", TablesAvailable.as_view(), name="table_available"),
+    path("branch/<int:branch_id>/tables/available/<str:date>", TablesAvailableByDate.as_view(), name="table_available_by_date"),
     path("table/create", TableCreate.as_view(), name="table_create"),
     path("table/<int:pk>", TableDetailView.as_view(), name="table_detail"),
 
@@ -103,4 +105,8 @@ urlpatterns = [
     path("reservation/create", ReservationCreate.as_view(), name="reservation_create"),
     path("branch/<int:branch_id>/reservations", ReservationList.as_view(), name="reservations"),
     path("reservation/<int:pk>", ReservationDetailView.as_view(), name="reservation_detail"),
+
+    path('restaurants/<int:restaurant_id>/branches/<int:branch_id>/reservations/', BranchReservationView.as_view(), name='branch-reservation-list'),
+    path('reservations/', CreateReservationView.as_view(), name='create-reservation'),
 ]
+
