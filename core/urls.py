@@ -7,6 +7,7 @@ from apps.wpp.views import *
 urlpatterns = [
     # wpp bot api custom
     path("wpp", Whatsapp.as_view(), name="wpp"),
+
 ]
 
 if settings.DEBUG:

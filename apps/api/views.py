@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
 from django.conf import settings
+from django.shortcuts import get_object_or_404
 
 from .permissions import IsManager, IsAdmin, AllowAny, IsBranchStaff
 from .serializers import *
@@ -35,7 +36,7 @@ class Plans(generics.ListAPIView):
 # Restaurant
 # ListAPIView already generates the response. No need to define a get method.
 class Restaurants(generics.ListAPIView):
-    permission_classes = [IsAdmin]
+    permission_classes = [IsAdmin | AllowAny]
     serializer_class = RestaurantSerializer
     queryset = Restaurant.objects.all()
 
@@ -72,7 +73,7 @@ class RestaurantManager(APIView):
 
 # RUD Retrieve - Update - Destroy
 class RestaurantDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAdmin]
+    permission_classes = [IsAdmin | AllowAny]
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
 
@@ -99,13 +100,13 @@ class BranchCreate(generics.CreateAPIView):
 
 # RUD Retrieve - Update - Destroy
 class BranchDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAdmin |IsManager]
+    permission_classes = [IsAdmin |IsManager | AllowAny]
     queryset = Branch.objects.all()
     serializer_class = BranchSerializer
 
 
 class Branches(generics.ListAPIView):
-    permission_classes = [IsAdmin | IsManager]
+    permission_classes = [IsAdmin | IsManager | AllowAny]
     serializer_class = BranchSerializer
     
     def get_queryset(self):
@@ -436,6 +437,39 @@ class TableDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Table.objects.all()
     serializer_class = TableSerializer
 
+class TablesAvailable(generics.ListAPIView):
+    permission_classes = [IsManager | IsAdmin | AllowAny]
+    serializer_class = TableSerializer
+    queryset = Table.objects.all()
+
+    def get_queryset(self):
+        branch_id = self.kwargs['branch_id']
+        date = self.request.query_params.get('date')
+        time = self.request.query_params.get('time')
+        guests = self.request.query_params.get('guests')
+
+        if not all([date, time, guests]):
+            return Table.objects.none()
+
+        # Get all tables that are bookable and have enough capacity
+        tables = Table.objects.filter(
+            branch_id=branch_id,
+            bookable=True,
+            capacity__gte=guests
+        )
+
+        # Get tables that are already reserved for this date/time
+        reserved_tables = Reservation.objects.filter(
+            branch_id=branch_id,
+            date=date,
+            time=time
+        ).values_list('table_id', flat=True)
+
+        # Exclude reserved tables
+        available_tables = tables.exclude(id__in=reserved_tables)
+
+        return available_tables
+
 class ReservationList(generics.ListAPIView):    
     permission_classes = [IsManager | IsAdmin | IsBranchStaff]
     serializer_class = ReservationSerializer
@@ -454,3 +488,53 @@ class ReservationDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsManager | IsAdmin | IsBranchStaff]
     queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
+
+class BranchReservationView(generics.ListAPIView):
+    serializer_class = ReservationSerializer
+    
+    def get_queryset(self):
+        restaurant_id = self.kwargs['restaurant_id']
+        branch_id = self.kwargs['branch_id']
+        restaurant = get_object_or_404(Restaurant, id=restaurant_id)
+        branch = get_object_or_404(Branch, id=branch_id, restaurant=restaurant)
+        return Reservation.objects.filter(branch=branch)
+
+class CreateReservationView(generics.CreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = ReservationCreateSerializer
+
+    def perform_create(self, serializer):
+        table = serializer.validated_data['table']
+        reservation = serializer.save(branch=table.branch)
+
+class TablesAvailableByDate(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = TableSerializer
+    queryset = Table.objects.all()
+
+    def get_queryset(self):
+        branch_id = self.kwargs['branch_id']
+        date = self.kwargs['date']
+        time = self.request.query_params.get('time')
+        guests = self.request.query_params.get('guests')
+
+        # Get all tables for this branch
+        tables = Table.objects.filter(branch_id=branch_id)
+
+        if guests:
+            tables = tables.filter(capacity__gte=guests)
+
+        # Get tables that are already reserved for this date/time
+        reserved_tables = Reservation.objects.filter(
+            branch_id=branch_id,
+            date=date
+        )
+        if time:
+            reserved_tables = reserved_tables.filter(time=time)
+            
+        reserved_table_ids = reserved_tables.values_list('table_id', flat=True)
+
+        # Exclude reserved tables
+        available_tables = tables.exclude(id__in=reserved_table_ids)
+
+        return available_tables

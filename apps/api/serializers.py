@@ -490,3 +490,19 @@ class ReservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
         fields = '__all__'
+
+class ReservationCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reservation
+        fields = ['name', 'email', 'phone', 'date', 'time', 'guests', 'message', 'table']
+
+    def create(self, validated_data):
+        reservation = super().create(validated_data)
+        
+        subject = "Confirmación de Reserva en " + reservation.branch.restaurant.name
+        message = f"Hola {reservation.name},\n\nGracias por tu reserva para el {reservation.date} a las {reservation.time}.\n\nTe esperamos!"
+        from_email = settings.DEFAULT_FROM_EMAIL
+        recipient_list = [reservation.email]
+        send_mail(subject, message, from_email, recipient_list)
+        
+        return reservation 
