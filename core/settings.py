@@ -50,8 +50,8 @@ CSRF_COOKIE_SECURE = True
 
 # TODO: cambiar tiempo de expiracion
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=2),  
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),    
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),    
 }
 
 MEDIA_URL = '/media/'
