@@ -108,5 +108,6 @@ urlpatterns = [
 
     path('restaurants/<int:restaurant_id>/branches/<int:branch_id>/reservations/', BranchReservationView.as_view(), name='branch-reservation-list'),
     path('reservations/', CreateReservationView.as_view(), name='create-reservation'),
+    path('reservations/<int:restaurant_id>/branches/<int:branch_id>/<str:date>', BranchReservationView.as_view(), name='branch-reservation-list'),
 ]
 
