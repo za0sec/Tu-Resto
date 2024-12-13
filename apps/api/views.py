@@ -495,9 +495,17 @@ class BranchReservationView(generics.ListAPIView):
     def get_queryset(self):
         restaurant_id = self.kwargs['restaurant_id']
         branch_id = self.kwargs['branch_id']
+        date = self.kwargs.get('date')
+        
         restaurant = get_object_or_404(Restaurant, id=restaurant_id)
         branch = get_object_or_404(Branch, id=branch_id, restaurant=restaurant)
-        return Reservation.objects.filter(branch=branch)
+        
+        queryset = Reservation.objects.filter(branch=branch)
+        
+        if date:
+            queryset = queryset.filter(date=date)
+            
+        return queryset
 
 class CreateReservationView(generics.CreateAPIView):
     permission_classes = [AllowAny]
